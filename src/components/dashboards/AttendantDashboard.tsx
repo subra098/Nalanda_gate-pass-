@@ -60,22 +60,18 @@ export default function AttendantDashboard() {
 
   const handleApprove = async (pass: any) => {
     try {
-      const isChandaka = pass.destination_type === 'chandaka';
-      const newStatus = isChandaka ? 'superintendent_approved' : 'attendant_approved';
-
       const { error } = await supabase
         .from('gatepasses')
         .update({
-          status: newStatus,
+          status: 'attendant_approved',
           attendant_id: user?.id,
-          attendant_notes: notes,
-          parent_confirmed: !isChandaka
+          attendant_notes: notes
         })
         .eq('id', pass.id);
 
       if (error) throw error;
 
-      toast.success(isChandaka ? 'Approved! Pass sent to superintendent.' : 'Approved! Forwarded to superintendent.');
+      toast.success('Pass approved! Forwarded to superintendent.');
       setSelectedPass(null);
       setNotes('');
       fetchHostelAndPasses();
@@ -221,9 +217,7 @@ export default function AttendantDashboard() {
           <div className="space-y-4">
             <div>
               <p className="text-sm text-muted-foreground mb-2">
-                {selectedPass?.destination_type === 'chandaka' 
-                  ? 'Chandaka destination - Can approve directly'
-                  : 'Requires parent confirmation and superintendent approval'}
+                Review this pass request. After approval, it will be forwarded to the superintendent.
               </p>
             </div>
             <Textarea
