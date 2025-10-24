@@ -36,19 +36,33 @@ export default function AttendantDashboard() {
       if (profile?.hostel) {
         setHostel(profile.hostel);
         
-        // Fetch passes from the same hostel
-        const { data, error } = await supabase
-          .from('gatepasses')
-          .select(`
-            *,
-            profiles!gatepasses_student_id_fkey(full_name, roll_no, parent_contact, hostel)
-          `)
-          .eq('profiles.hostel', profile.hostel)
-          .in('status', ['pending', 'attendant_approved'])
-          .order('created_at', { ascending: false });
+        // First get student IDs from the same hostel
+        const { data: students, error: studentsError } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('hostel', profile.hostel);
 
-        if (error) throw error;
-        setPasses(data || []);
+        if (studentsError) throw studentsError;
+
+        const studentIds = students?.map(s => s.id) || [];
+
+        if (studentIds.length > 0) {
+          // Fetch passes for these students
+          const { data, error } = await supabase
+            .from('gatepasses')
+            .select(`
+              *,
+              profiles!gatepasses_student_id_fkey(full_name, roll_no, parent_contact, hostel)
+            `)
+            .in('student_id', studentIds)
+            .in('status', ['pending', 'attendant_approved'])
+            .order('created_at', { ascending: false });
+
+          if (error) throw error;
+          setPasses(data || []);
+        } else {
+          setPasses([]);
+        }
       }
     } catch (error) {
       console.error('Error:', error);
