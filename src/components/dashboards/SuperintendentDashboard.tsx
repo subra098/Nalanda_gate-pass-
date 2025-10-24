@@ -24,31 +24,73 @@ export default function SuperintendentDashboard() {
       // Fetch passes awaiting approval
       const { data: passData, error: passError } = await supabase
         .from('gatepasses')
-        .select(`
-          *,
-          profiles!gatepasses_student_id_fkey(full_name, roll_no, hostel, parent_contact)
-        `)
+        .select('*')
         .eq('status', 'attendant_approved')
         .order('created_at', { ascending: false });
 
       if (passError) throw passError;
-      setPasses(passData || []);
+
+      // Fetch profiles for these passes
+      if (passData && passData.length > 0) {
+        const studentIds = passData.map(p => p.student_id);
+        const { data: profilesData, error: profilesError } = await supabase
+          .from('profiles')
+          .select('id, full_name, roll_no, hostel, parent_contact')
+          .in('id', studentIds);
+
+        if (profilesError) throw profilesError;
+
+        // Manually join
+        const passesWithProfiles = passData.map(pass => ({
+          ...pass,
+          profiles: profilesData?.find(p => p.id === pass.student_id)
+        }));
+
+        setPasses(passesWithProfiles);
+      } else {
+        setPasses([]);
+      }
 
       // Fetch extension requests
       const { data: extData, error: extError } = await supabase
         .from('extension_requests')
-        .select(`
-          *,
-          gatepasses(
-            *,
-            profiles!gatepasses_student_id_fkey(full_name, roll_no)
-          )
-        `)
+        .select('*')
         .eq('status', 'pending')
         .order('created_at', { ascending: false });
 
       if (extError) throw extError;
-      setExtensions(extData || []);
+
+      // Fetch associated gatepasses and profiles for extensions
+      if (extData && extData.length > 0) {
+        const gatepassIds = extData.map(e => e.gatepass_id);
+        const { data: gatepassData, error: gatepassError } = await supabase
+          .from('gatepasses')
+          .select('*')
+          .in('id', gatepassIds);
+
+        if (gatepassError) throw gatepassError;
+
+        const extStudentIds = gatepassData?.map(g => g.student_id) || [];
+        const { data: extProfilesData, error: extProfilesError } = await supabase
+          .from('profiles')
+          .select('id, full_name, roll_no')
+          .in('id', extStudentIds);
+
+        if (extProfilesError) throw extProfilesError;
+
+        // Manually join extensions with gatepasses and profiles
+        const extensionsWithData = extData.map(ext => ({
+          ...ext,
+          gatepasses: {
+            ...gatepassData?.find(g => g.id === ext.gatepass_id),
+            profiles: extProfilesData?.find(p => p.id === gatepassData?.find(g => g.id === ext.gatepass_id)?.student_id)
+          }
+        }));
+
+        setExtensions(extensionsWithData);
+      } else {
+        setExtensions([]);
+      }
     } catch (error) {
       console.error('Error:', error);
       toast.error('Failed to load data');
