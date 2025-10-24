@@ -21,17 +21,35 @@ export default function SecurityDashboard() {
 
   const fetchLogs = async () => {
     try {
-      const { data, error } = await supabase
+      // Fetch gate logs
+      const { data: logsData, error: logsError } = await supabase
         .from('gate_logs')
-        .select(`
-          *,
-          gatepasses(*)
-        `)
+        .select('*')
         .order('timestamp', { ascending: false })
         .limit(50);
 
-      if (error) throw error;
-      setLogs(data || []);
+      if (logsError) throw logsError;
+
+      // Fetch associated gatepasses
+      if (logsData && logsData.length > 0) {
+        const gatepassIds = logsData.map(log => log.gatepass_id);
+        const { data: gatepassesData, error: gatepassesError } = await supabase
+          .from('gatepasses')
+          .select('*')
+          .in('id', gatepassIds);
+
+        if (gatepassesError) throw gatepassesError;
+
+        // Manually join
+        const logsWithGatepasses = logsData.map(log => ({
+          ...log,
+          gatepasses: gatepassesData?.find(g => g.id === log.gatepass_id)
+        }));
+
+        setLogs(logsWithGatepasses);
+      } else {
+        setLogs([]);
+      }
     } catch (error) {
       console.error('Error:', error);
       toast.error('Failed to load logs');
