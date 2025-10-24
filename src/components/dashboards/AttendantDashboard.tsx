@@ -36,10 +36,10 @@ export default function AttendantDashboard() {
       if (profile?.hostel) {
         setHostel(profile.hostel);
         
-        // First get student IDs from the same hostel
+        // Get all students from the same hostel
         const { data: students, error: studentsError } = await supabase
           .from('profiles')
-          .select('id')
+          .select('id, full_name, roll_no, parent_contact, hostel')
           .eq('hostel', profile.hostel);
 
         if (studentsError) throw studentsError;
@@ -48,18 +48,22 @@ export default function AttendantDashboard() {
 
         if (studentIds.length > 0) {
           // Fetch passes for these students
-          const { data, error } = await supabase
+          const { data: passesData, error: passesError } = await supabase
             .from('gatepasses')
-            .select(`
-              *,
-              profiles!gatepasses_student_id_fkey(full_name, roll_no, parent_contact, hostel)
-            `)
+            .select('*')
             .in('student_id', studentIds)
             .in('status', ['pending', 'attendant_approved'])
             .order('created_at', { ascending: false });
 
-          if (error) throw error;
-          setPasses(data || []);
+          if (passesError) throw passesError;
+
+          // Manually join profiles with passes
+          const passesWithProfiles = passesData?.map(pass => ({
+            ...pass,
+            profiles: students.find(s => s.id === pass.student_id)
+          })) || [];
+
+          setPasses(passesWithProfiles);
         } else {
           setPasses([]);
         }
