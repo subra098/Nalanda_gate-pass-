@@ -20,6 +20,14 @@ export default function Dashboard() {
     return <Navigate to="/auth" replace />;
   }
 
+  if (!role) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-lg">Loading your dashboard...</div>
+      </div>
+    );
+  }
+
   return (
     <>
       {role === 'student' && <StudentDashboard />}

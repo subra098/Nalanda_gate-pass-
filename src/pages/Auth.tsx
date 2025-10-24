@@ -46,7 +46,7 @@ export default function Auth() {
 
         await signUp(email, password, fullName, role, additionalData);
       }
-      navigate('/dashboard');
+      // Navigation is handled by useEffect when user is set
     } catch (error) {
       console.error('Auth error:', error);
     }
