@@ -2,7 +2,8 @@ import { useState, useEffect, useRef } from 'react';
 import { BrowserMultiFormatReader } from '@zxing/library';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { X } from 'lucide-react';
+import { X, ScanLine } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface QRScannerProps {
   onScan: (data: string) => void;
@@ -11,42 +12,58 @@ interface QRScannerProps {
 
 export default function QRScanner({ onScan, onClose }: QRScannerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const codeReaderRef = useRef<BrowserMultiFormatReader | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
   const [error, setError] = useState<string>('');
+  const [isScanning, setIsScanning] = useState(false);
 
   useEffect(() => {
-    const codeReader = new BrowserMultiFormatReader();
-    
-    const startScanning = async () => {
+    const startCamera = async () => {
       try {
-        const videoInputDevices = await codeReader.listVideoInputDevices();
-        if (videoInputDevices.length === 0) {
-          setError('No camera found');
-          return;
-        }
-
+        const stream = await navigator.mediaDevices.getUserMedia({ 
+          video: { facingMode: 'environment' } 
+        });
+        
         if (videoRef.current) {
-          codeReader.decodeFromVideoDevice(
-            undefined,
-            videoRef.current,
-            (result, err) => {
-              if (result) {
-                onScan(result.getText());
-              }
-            }
-          );
+          videoRef.current.srcObject = stream;
+          streamRef.current = stream;
         }
+        
+        codeReaderRef.current = new BrowserMultiFormatReader();
       } catch (err) {
-        console.error('Error starting scanner:', err);
+        console.error('Error starting camera:', err);
         setError('Failed to access camera');
       }
     };
 
-    startScanning();
+    startCamera();
 
     return () => {
-      codeReader.reset();
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+      }
+      if (codeReaderRef.current) {
+        codeReaderRef.current.reset();
+      }
     };
-  }, [onScan]);
+  }, []);
+
+  const handleScanClick = async () => {
+    if (!codeReaderRef.current || !videoRef.current || isScanning) return;
+    
+    setIsScanning(true);
+    try {
+      const result = await codeReaderRef.current.decodeFromVideoElement(videoRef.current);
+      if (result) {
+        onScan(result.getText());
+      }
+    } catch (err) {
+      console.error('Error scanning:', err);
+      toast.error('No QR code detected. Please try again.');
+    } finally {
+      setIsScanning(false);
+    }
+  };
 
   return (
     <Dialog open onOpenChange={onClose}>
@@ -69,12 +86,22 @@ export default function QRScanner({ onScan, onClose }: QRScannerProps) {
             </div>
           )}
           <div className="text-center text-sm text-muted-foreground">
-            Position the QR code within the frame
+            Position the QR code within the frame and click Scan
           </div>
-          <Button variant="outline" onClick={onClose} className="w-full">
-            <X className="h-4 w-4 mr-2" />
-            Cancel
-          </Button>
+          <div className="grid grid-cols-2 gap-3">
+            <Button 
+              onClick={handleScanClick} 
+              disabled={isScanning || !!error}
+              className="w-full"
+            >
+              <ScanLine className="h-4 w-4 mr-2" />
+              {isScanning ? 'Scanning...' : 'Scan QR Code'}
+            </Button>
+            <Button variant="outline" onClick={onClose} className="w-full">
+              <X className="h-4 w-4 mr-2" />
+              Cancel
+            </Button>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
