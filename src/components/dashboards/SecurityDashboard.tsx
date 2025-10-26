@@ -4,7 +4,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ScanLine, LogOut as ExitIcon, LogIn as EntryIcon } from 'lucide-react';
+import { ScanLine, LogOut as ExitIcon, LogIn as EntryIcon, Trash2 } from 'lucide-react';
 import Layout from '@/components/Layout';
 import { toast } from 'sonner';
 import QRScanner from '@/components/security/QRScanner';
@@ -148,6 +148,23 @@ export default function SecurityDashboard() {
     );
   };
 
+  const handleDeleteLog = async (logId: string) => {
+    try {
+      const { error } = await supabase
+        .from('gate_logs')
+        .delete()
+        .eq('id', logId);
+
+      if (error) throw error;
+
+      toast.success('Activity deleted successfully');
+      fetchLogs();
+    } catch (error) {
+      console.error('Error deleting log:', error);
+      toast.error('Failed to delete activity');
+    }
+  };
+
   return (
     <Layout>
       <div className="space-y-6">
@@ -225,11 +242,21 @@ export default function SecurityDashboard() {
                         </p>
                       </div>
                     </div>
-                    <div className="text-right">
-                      {getActionBadge(log.action)}
-                      <p className="text-sm text-muted-foreground mt-1">
-                        {new Date(log.timestamp).toLocaleString()}
-                      </p>
+                    <div className="flex items-center gap-3">
+                      <div className="text-right">
+                        {getActionBadge(log.action)}
+                        <p className="text-sm text-muted-foreground mt-1">
+                          {new Date(log.timestamp).toLocaleString()}
+                        </p>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleDeleteLog(log.id)}
+                        className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
                     </div>
                   </div>
                 ))}
