@@ -14,6 +14,8 @@ export default function SecurityDashboard() {
   const [logs, setLogs] = useState<any[]>([]);
   const [showScanner, setShowScanner] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [scannedPass, setScannedPass] = useState<any>(null);
+  const [showPassDetails, setShowPassDetails] = useState(false);
 
   useEffect(() => {
     fetchLogs();
@@ -63,7 +65,7 @@ export default function SecurityDashboard() {
       const data = JSON.parse(qrData);
       const { passId } = data;
 
-      // Fetch the pass
+      // Fetch the pass with student profile
       const { data: pass, error: passError } = await supabase
         .from('gatepasses')
         .select('*')
@@ -73,6 +75,17 @@ export default function SecurityDashboard() {
       if (passError || !pass) {
         toast.error('Invalid QR code');
         return;
+      }
+
+      // Fetch student profile
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', pass.student_id)
+        .single();
+
+      if (profileError) {
+        console.error('Error fetching profile:', profileError);
       }
 
       // Check if pass is approved
@@ -111,8 +124,11 @@ export default function SecurityDashboard() {
 
       if (updateError) throw updateError;
 
-      toast.success(`${action === 'exit' ? 'Exit' : 'Entry'} recorded successfully`);
+      // Show pass details
+      setScannedPass({ ...pass, profile, action });
       setShowScanner(false);
+      setShowPassDetails(true);
+      toast.success(`${action === 'exit' ? 'Exit' : 'Entry'} recorded successfully`);
       fetchLogs();
     } catch (error) {
       console.error('Error:', error);
@@ -228,6 +244,80 @@ export default function SecurityDashboard() {
           onScan={handleScan}
           onClose={() => setShowScanner(false)}
         />
+      )}
+
+      {showPassDetails && scannedPass && (
+        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <Card className="w-full max-w-2xl">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle>Pass Details</CardTitle>
+                <Button 
+                  variant="ghost" 
+                  size="icon"
+                  onClick={() => setShowPassDetails(false)}
+                >
+                  <span className="sr-only">Close</span>
+                  ×
+                </Button>
+              </div>
+              <div className="flex items-center gap-2 mt-2">
+                {getActionBadge(scannedPass.action)}
+                <Badge variant="outline">
+                  {scannedPass.status}
+                </Badge>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid gap-4 md:grid-cols-2">
+                <div>
+                  <p className="text-sm text-muted-foreground">Student Name</p>
+                  <p className="font-semibold">{scannedPass.profile?.full_name || 'N/A'}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Roll Number</p>
+                  <p className="font-semibold">{scannedPass.profile?.roll_no || 'N/A'}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Hostel</p>
+                  <p className="font-semibold">{scannedPass.profile?.hostel || 'N/A'}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Contact</p>
+                  <p className="font-semibold">{scannedPass.profile?.parent_contact || 'N/A'}</p>
+                </div>
+              </div>
+              
+              <div className="border-t pt-4 space-y-3">
+                <div>
+                  <p className="text-sm text-muted-foreground">Destination Type</p>
+                  <p className="font-semibold capitalize">{scannedPass.destination_type.replace('_', ' ')}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Destination Details</p>
+                  <p className="font-semibold">{scannedPass.destination_details}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Reason</p>
+                  <p className="font-semibold">{scannedPass.reason}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Expected Return</p>
+                  <p className="font-semibold">
+                    {new Date(scannedPass.expected_return_at).toLocaleString()}
+                  </p>
+                </div>
+              </div>
+
+              <Button 
+                onClick={() => setShowPassDetails(false)} 
+                className="w-full"
+              >
+                Close
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
       )}
     </Layout>
   );
