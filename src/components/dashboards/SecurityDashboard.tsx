@@ -295,44 +295,50 @@ export default function SecurityDashboard() {
                 </Badge>
               </div>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid gap-4 md:grid-cols-2">
-                <div>
-                  <p className="text-sm text-muted-foreground">Student Name</p>
-                  <p className="font-semibold">{scannedPass.profile?.full_name || 'N/A'}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Roll Number</p>
-                  <p className="font-semibold">{scannedPass.profile?.roll_no || 'N/A'}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Hostel</p>
-                  <p className="font-semibold">{scannedPass.profile?.hostel || 'N/A'}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Contact</p>
-                  <p className="font-semibold">{scannedPass.profile?.parent_contact || 'N/A'}</p>
+            <CardContent className="space-y-6">
+              <div>
+                <h3 className="text-lg font-semibold mb-4 text-primary">Student Details</h3>
+                <div className="grid gap-4 md:grid-cols-2 p-4 bg-muted/50 rounded-lg">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Student Name</p>
+                    <p className="font-semibold text-lg">{scannedPass.profile?.full_name || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Roll Number</p>
+                    <p className="font-semibold text-lg">{scannedPass.profile?.roll_no || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Hostel</p>
+                    <p className="font-semibold text-lg">{scannedPass.profile?.hostel || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Contact Number</p>
+                    <p className="font-semibold text-lg">{scannedPass.profile?.parent_contact || 'N/A'}</p>
+                  </div>
                 </div>
               </div>
               
-              <div className="border-t pt-4 space-y-3">
-                <div>
-                  <p className="text-sm text-muted-foreground">Destination Type</p>
-                  <p className="font-semibold capitalize">{scannedPass.destination_type.replace('_', ' ')}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Destination Details</p>
-                  <p className="font-semibold">{scannedPass.destination_details}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Reason</p>
-                  <p className="font-semibold">{scannedPass.reason}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Expected Return</p>
-                  <p className="font-semibold">
-                    {new Date(scannedPass.expected_return_at).toLocaleString()}
-                  </p>
+              <div>
+                <h3 className="text-lg font-semibold mb-4 text-primary">Pass Information</h3>
+                <div className="space-y-3">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Destination Type</p>
+                    <p className="font-semibold capitalize">{scannedPass.destination_type.replace('_', ' ')}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Destination Details</p>
+                    <p className="font-semibold">{scannedPass.destination_details}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Reason</p>
+                    <p className="font-semibold">{scannedPass.reason}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Expected Return</p>
+                    <p className="font-semibold">
+                      {new Date(scannedPass.expected_return_at).toLocaleString()}
+                    </p>
+                  </div>
                 </div>
               </div>
 
