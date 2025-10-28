@@ -78,18 +78,40 @@ export default function AttendantDashboard() {
 
   const handleApprove = async (pass: any) => {
     try {
+      // Check if destination is chandaka - if yes, auto-approve and generate QR
+      const isChandaka = pass.destination_type?.toLowerCase() === 'chandaka';
+      
+      let updateData: any = {
+        attendant_id: user?.id,
+        attendant_notes: notes
+      };
+
+      if (isChandaka) {
+        // Auto-approve chandaka passes with QR code
+        const qrData = JSON.stringify({
+          passId: pass.id,
+          timestamp: Date.now()
+        });
+        
+        updateData.status = 'superintendent_approved';
+        updateData.qr_code_data = qrData;
+      } else {
+        // Regular passes go to superintendent
+        updateData.status = 'attendant_approved';
+      }
+
       const { error } = await supabase
         .from('gatepasses')
-        .update({
-          status: 'attendant_approved',
-          attendant_id: user?.id,
-          attendant_notes: notes
-        })
+        .update(updateData)
         .eq('id', pass.id);
 
       if (error) throw error;
 
-      toast.success('Pass approved! Forwarded to superintendent.');
+      toast.success(
+        isChandaka 
+          ? 'Chandaka pass approved! QR code generated.' 
+          : 'Pass approved! Forwarded to superintendent.'
+      );
       setSelectedPass(null);
       setNotes('');
       fetchHostelAndPasses();
