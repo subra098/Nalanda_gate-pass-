@@ -153,10 +153,10 @@ export default function AttendantDashboard() {
     return variants[status] || { label: status, variant: 'outline' };
   };
 
-  // Chart data
+  // Chart data with vibrant colors
   const statusChartData = [
-    { name: 'Pending', value: passes.filter(p => p.status === 'pending').length, color: 'hsl(var(--education-teal))' },
-    { name: 'Forwarded', value: passes.filter(p => p.status === 'attendant_approved').length, color: 'hsl(var(--education-forest))' },
+    { name: 'Pending', value: passes.filter(p => p.status === 'pending').length, fill: '#F59E0B' },
+    { name: 'Forwarded', value: passes.filter(p => p.status === 'attendant_approved').length, fill: '#10B981' },
   ].filter(item => item.value > 0);
 
   const destinationData = passes.reduce((acc: any[], pass) => {
@@ -169,6 +169,8 @@ export default function AttendantDashboard() {
     }
     return acc;
   }, []);
+
+  const DESTINATION_COLORS = ['#8B5CF6', '#EC4899', '#F97316', '#14B8A6', '#3B82F6', '#EF4444'];
 
   return (
     <Layout>
@@ -204,27 +206,50 @@ export default function AttendantDashboard() {
         </div>
 
         <div className="grid gap-6 md:grid-cols-2">
-          <Card>
+          <Card className="bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-950 dark:to-orange-950">
             <CardHeader>
-              <CardTitle>Pass Status Overview</CardTitle>
+              <CardTitle className="text-education-navy dark:text-white">Pass Status Overview</CardTitle>
               <CardDescription>Current pass distribution</CardDescription>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={250}>
                 <BarChart data={statusChartData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
-                  <YAxis />
-                  <Tooltip />
-                  <Bar dataKey="value" fill="hsl(var(--education-teal))" />
+                  <defs>
+                    <linearGradient id="pendingGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#F59E0B" stopOpacity={0.9}/>
+                      <stop offset="95%" stopColor="#FBBF24" stopOpacity={0.8}/>
+                    </linearGradient>
+                    <linearGradient id="forwardedGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#10B981" stopOpacity={0.9}/>
+                      <stop offset="95%" stopColor="#34D399" stopOpacity={0.8}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
+                  <XAxis dataKey="name" stroke="#374151" />
+                  <YAxis stroke="#374151" />
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: 'rgba(255,255,255,0.95)', 
+                      border: '2px solid #e0e0e0',
+                      borderRadius: '8px'
+                    }}
+                  />
+                  <Bar 
+                    dataKey="value" 
+                    radius={[8, 8, 0, 0]}
+                  >
+                    {statusChartData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.fill} />
+                    ))}
+                  </Bar>
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950 dark:to-pink-950">
             <CardHeader>
-              <CardTitle>Destination Types</CardTitle>
+              <CardTitle className="text-education-navy dark:text-white">Destination Types</CardTitle>
               <CardDescription>Pass requests by destination</CardDescription>
             </CardHeader>
             <CardContent>
@@ -236,15 +261,24 @@ export default function AttendantDashboard() {
                     cy="50%"
                     labelLine={false}
                     label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                    outerRadius={80}
+                    outerRadius={85}
+                    innerRadius={45}
                     fill="#8884d8"
                     dataKey="value"
+                    strokeWidth={2}
+                    stroke="#fff"
                   >
                     {destinationData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={`hsl(${index * 50}, 70%, 50%)`} />
+                      <Cell key={`cell-${index}`} fill={DESTINATION_COLORS[index % DESTINATION_COLORS.length]} />
                     ))}
                   </Pie>
-                  <Tooltip />
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: 'rgba(255,255,255,0.95)', 
+                      border: '2px solid #e0e0e0',
+                      borderRadius: '8px'
+                    }}
+                  />
                 </PieChart>
               </ResponsiveContainer>
             </CardContent>

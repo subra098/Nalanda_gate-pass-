@@ -222,37 +222,71 @@ export default function SuperintendentDashboard() {
         </div>
 
         <div className="grid gap-6 md:grid-cols-2">
-          <Card>
+          <Card className="bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-950 dark:to-teal-950">
             <CardHeader>
-              <CardTitle>Weekly Pass Trends</CardTitle>
+              <CardTitle className="text-education-navy dark:text-white">Weekly Pass Trends</CardTitle>
               <CardDescription>Recent pass approval activity</CardDescription>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={250}>
                 <AreaChart data={approvalData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="day" />
-                  <YAxis />
-                  <Tooltip />
-                  <Area type="monotone" dataKey="passes" stroke="hsl(var(--education-navy))" fill="hsl(var(--education-teal))" />
+                  <defs>
+                    <linearGradient id="areaGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#0EA5E9" stopOpacity={0.8}/>
+                      <stop offset="95%" stopColor="#06B6D4" stopOpacity={0.2}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
+                  <XAxis dataKey="day" stroke="#374151" />
+                  <YAxis stroke="#374151" />
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: 'rgba(255,255,255,0.95)', 
+                      border: '2px solid #e0e0e0',
+                      borderRadius: '8px'
+                    }}
+                  />
+                  <Area 
+                    type="monotone" 
+                    dataKey="passes" 
+                    stroke="#0EA5E9" 
+                    strokeWidth={3}
+                    fill="url(#areaGradient)" 
+                  />
                 </AreaChart>
               </ResponsiveContainer>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="bg-gradient-to-br from-green-50 to-lime-50 dark:from-green-950 dark:to-lime-950">
             <CardHeader>
-              <CardTitle>Passes by Hostel</CardTitle>
+              <CardTitle className="text-education-navy dark:text-white">Passes by Hostel</CardTitle>
               <CardDescription>Distribution across hostels</CardDescription>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={250}>
                 <BarChart data={hostelData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
-                  <YAxis />
-                  <Tooltip />
-                  <Bar dataKey="value" fill="hsl(var(--education-forest))" />
+                  <defs>
+                    <linearGradient id="hostelGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#059669" stopOpacity={0.9}/>
+                      <stop offset="95%" stopColor="#10B981" stopOpacity={0.8}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
+                  <XAxis dataKey="name" stroke="#374151" />
+                  <YAxis stroke="#374151" />
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: 'rgba(255,255,255,0.95)', 
+                      border: '2px solid #e0e0e0',
+                      borderRadius: '8px'
+                    }}
+                  />
+                  <Bar 
+                    dataKey="value" 
+                    fill="url(#hostelGradient)" 
+                    radius={[8, 8, 0, 0]}
+                  />
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>

@@ -179,10 +179,10 @@ export default function SecurityDashboard() {
     return acc;
   }, []).slice(0, 12);
 
-  // Exit vs Entry data
+  // Exit vs Entry data with vibrant colors
   const activityData = [
-    { name: 'Exits', value: logs.filter(l => l.action === 'exit').length, color: 'hsl(var(--education-burgundy))' },
-    { name: 'Entries', value: logs.filter(l => l.action === 'entry').length, color: 'hsl(var(--education-forest))' },
+    { name: 'Exits', value: logs.filter(l => l.action === 'exit').length, color: '#DC2626' },
+    { name: 'Entries', value: logs.filter(l => l.action === 'entry').length, color: '#059669' },
   ].filter(item => item.value > 0);
 
   return (
@@ -235,47 +235,86 @@ export default function SecurityDashboard() {
         </div>
 
         <div className="grid gap-6 md:grid-cols-2">
-          <Card>
+          <Card className="bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-950 dark:to-blue-950">
             <CardHeader>
-              <CardTitle>Hourly Gate Activity</CardTitle>
-              <CardDescription>Entry and exit patterns</CardDescription>
+              <CardTitle className="text-education-navy dark:text-white">Hourly Gate Activity</CardTitle>
+              <CardDescription>Entry and exit patterns throughout the day</CardDescription>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={250}>
                 <LineChart data={hourlyData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="hour" />
-                  <YAxis />
-                  <Tooltip />
-                  <Line type="monotone" dataKey="count" stroke="hsl(var(--education-navy))" strokeWidth={2} />
+                  <defs>
+                    <linearGradient id="lineGradient" x1="0" y1="0" x2="1" y2="0">
+                      <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.9}/>
+                      <stop offset="50%" stopColor="#8B5CF6" stopOpacity={0.9}/>
+                      <stop offset="95%" stopColor="#EC4899" stopOpacity={0.9}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
+                  <XAxis dataKey="hour" stroke="#374151" />
+                  <YAxis stroke="#374151" />
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: 'rgba(255,255,255,0.95)', 
+                      border: '2px solid #e0e0e0',
+                      borderRadius: '8px'
+                    }}
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="count" 
+                    stroke="url(#lineGradient)" 
+                    strokeWidth={3}
+                    dot={{ fill: '#8B5CF6', r: 5 }}
+                    activeDot={{ r: 7 }}
+                  />
                 </LineChart>
               </ResponsiveContainer>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="bg-gradient-to-br from-red-50 to-green-50 dark:from-red-950 dark:to-green-950">
             <CardHeader>
-              <CardTitle>Activity Distribution</CardTitle>
-              <CardDescription>Exits vs entries</CardDescription>
+              <CardTitle className="text-education-navy dark:text-white">Activity Distribution</CardTitle>
+              <CardDescription>Exits vs entries comparison</CardDescription>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={250}>
                 <PieChart>
+                  <defs>
+                    <linearGradient id="exitGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#DC2626" stopOpacity={0.9}/>
+                      <stop offset="95%" stopColor="#EF4444" stopOpacity={0.9}/>
+                    </linearGradient>
+                    <linearGradient id="entryGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#059669" stopOpacity={0.9}/>
+                      <stop offset="95%" stopColor="#10B981" stopOpacity={0.9}/>
+                    </linearGradient>
+                  </defs>
                   <Pie
                     data={activityData}
                     cx="50%"
                     cy="50%"
                     labelLine={false}
                     label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                    outerRadius={80}
+                    outerRadius={85}
+                    innerRadius={45}
                     fill="#8884d8"
                     dataKey="value"
+                    strokeWidth={2}
+                    stroke="#fff"
                   >
                     {activityData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
-                  <Tooltip />
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: 'rgba(255,255,255,0.95)', 
+                      border: '2px solid #e0e0e0',
+                      borderRadius: '8px'
+                    }}
+                  />
                 </PieChart>
               </ResponsiveContainer>
             </CardContent>
