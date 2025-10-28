@@ -53,6 +53,20 @@ All colors MUST be HSL.
     --sidebar-border: 220 13% 91%;
 
     --sidebar-ring: 217.2 91.2% 59.8%;
+
+    /* Dynamic color variables for black and blue effects */
+    --dynamic-black: 0 0% 0%;
+    --dynamic-blue: 217 91% 60%;
+    --dynamic-blue-light: 217 91% 80%;
+    --dynamic-blue-dark: 217 91% 40%;
+
+    /* Professional Education Theme Gradients */
+    --gradient-start: 210 100% 20%;
+    --gradient-middle: 0 50% 30%;
+    --gradient-end: 45 85% 50%;
+    --gradient-academic: linear-gradient(135deg, hsl(210 100% 20%), hsl(0 50% 30%), hsl(45 85% 50%));
+    --gradient-professional: linear-gradient(135deg, hsl(215 20% 40%), hsl(180 60% 35%), hsl(120 40% 25%));
+    --gradient-authority: linear-gradient(135deg, hsl(210 100% 20%), hsl(0 50% 30%), hsl(45 85% 50%));
   }
 
   .dark {
@@ -101,5 +115,125 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+/* Dynamic color effects */
+@layer utilities {
+  .animate-gradient {
+    background-size: 400% 400%;
+    animation: gradient-shift 8s ease infinite;
+  }
+
+  .glow-effect {
+    filter: drop-shadow(0 0 10px hsl(var(--dynamic-blue) / 0.5));
+    transition: filter 0.3s ease;
+  }
+
+  .glow-effect:hover {
+    filter: drop-shadow(0 0 20px hsl(var(--dynamic-blue) / 0.8));
+  }
+
+  .hover-lift {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+
+  .hover-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px hsl(var(--dynamic-black) / 0.2);
+  }
+
+  .pulse-blue {
+    animation: pulse-blue 2s ease-in-out infinite;
+  }
+
+  .color-shift {
+    animation: color-shift 4s ease-in-out infinite;
+  }
+
+  /* Professional Education Theme Utility Classes */
+  .bg-gradient-academic {
+    background: var(--gradient-academic);
+    background-size: 200% 200%;
+    animation: gradient-shift 8s ease infinite;
+  }
+
+  .bg-gradient-professional {
+    background: var(--gradient-professional);
+    background-size: 200% 200%;
+    animation: gradient-shift 8s ease infinite;
+  }
+
+  .bg-gradient-authority {
+    background: var(--gradient-authority);
+    background-size: 200% 200%;
+    animation: gradient-shift 8s ease infinite;
+  }
+
+  .glow-purple {
+    animation: glow-purple 2s ease-in-out infinite;
+  }
+
+  .glow-teal {
+    animation: glow-teal 2s ease-in-out infinite;
+  }
+
+  .bounce-gentle {
+    animation: bounce-gentle 2s ease-in-out infinite;
+  }
+
+  .scale-in {
+    animation: scale-in 0.5s ease-out;
+  }
+
+  .slide-in-left {
+    animation: slide-in-left 0.6s ease-out;
+  }
+
+  .hover-glow-purple:hover {
+    box-shadow: 0 0 20px hsl(270 100% 65% / 0.6);
+    transition: box-shadow 0.3s ease;
+  }
+
+  .hover-glow-teal:hover {
+    box-shadow: 0 0 20px hsl(180 100% 50% / 0.6);
+    transition: box-shadow 0.3s ease;
+  }
+
+  .text-gradient {
+    background: linear-gradient(45deg, hsl(210 100% 20%), hsl(0 50% 30%), hsl(45 85% 50%));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+}
+
+@keyframes gradient-shift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes pulse-blue {
+  0%, 100% {
+    box-shadow: 0 0 0 0 hsl(var(--dynamic-blue) / 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 10px hsl(var(--dynamic-blue) / 0);
+  }
+}
+
+@keyframes color-shift {
+  0%, 100% {
+    color: hsl(var(--dynamic-black));
+  }
+  50% {
+    color: hsl(var(--dynamic-blue));
   }
 }

@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useEffect } from 'react';
+import { motion } from 'framer-motion';
 
 type UserRole = 'student' | 'hostel_attendant' | 'superintendent' | 'security_guard';
 
@@ -53,85 +54,119 @@ export default function Auth() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 via-background to-secondary/5 p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle className="text-2xl">Digital Gatepass System</CardTitle>
-          <CardDescription>Secure hostel exit management</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Tabs value={isLogin ? 'login' : 'register'} onValueChange={(v) => setIsLogin(v === 'login')}>
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="login">Login</TabsTrigger>
-              <TabsTrigger value="register">Register</TabsTrigger>
-            </TabsList>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-professional p-4">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.5, ease: "easeOut" }}
+      >
+        <Card className="w-full max-w-md hover-glow-teal bg-white/95 backdrop-blur-sm border-white/20">
+          <CardHeader>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2, duration: 0.5 }}
+            >
+              <CardTitle className="text-2xl text-gradient">Digital Gatepass System</CardTitle>
+              <CardDescription>Secure hostel exit management</CardDescription>
+            </motion.div>
+          </CardHeader>
+          <CardContent>
+            <Tabs value={isLogin ? 'login' : 'register'} onValueChange={(v) => setIsLogin(v === 'login')}>
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="login">Login</TabsTrigger>
+                <TabsTrigger value="register">Register</TabsTrigger>
+              </TabsList>
 
-            <TabsContent value="login">
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="password">Password</Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                  />
-                </div>
-                <Button type="submit" className="w-full">Sign In</Button>
-              </form>
-            </TabsContent>
+              <TabsContent value="login">
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Email</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="password">Password</Label>
+                    <Input
+                      id="password"
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <Button type="submit" className="w-full">Sign In</Button>
+                </form>
+              </TabsContent>
 
-            <TabsContent value="register">
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="role">Role</Label>
-                  <Select value={role} onValueChange={(v) => setRole(v as UserRole)}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="student">Student</SelectItem>
-                      <SelectItem value="hostel_attendant">Hostel Attendant</SelectItem>
-                      <SelectItem value="superintendent">Superintendent</SelectItem>
-                      <SelectItem value="security_guard">Security Guard</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+              <TabsContent value="register">
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="role">Role</Label>
+                    <Select value={role} onValueChange={(v) => setRole(v as UserRole)}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="student">Student</SelectItem>
+                        <SelectItem value="hostel_attendant">Hostel Attendant</SelectItem>
+                        <SelectItem value="superintendent">Superintendent</SelectItem>
+                        <SelectItem value="security_guard">Security Guard</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="fullName">Full Name</Label>
-                  <Input
-                    id="fullName"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    required
-                  />
-                </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="fullName">Full Name</Label>
+                    <Input
+                      id="fullName"
+                      value={fullName}
+                      onChange={(e) => setFullName(e.target.value)}
+                      required
+                    />
+                  </div>
 
-                {role === 'student' && (
-                  <>
+                  {role === 'student' && (
+                    <>
+                      <div className="space-y-2">
+                        <Label htmlFor="rollNo">Roll Number</Label>
+                        <Input
+                          id="rollNo"
+                          value={rollNo}
+                          onChange={(e) => setRollNo(e.target.value)}
+                          required
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="hostel">Hostel</Label>
+                        <Input
+                          id="hostel"
+                          value={hostel}
+                          onChange={(e) => setHostel(e.target.value)}
+                          required
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="parentContact">Parent's Contact</Label>
+                        <Input
+                          id="parentContact"
+                          type="tel"
+                          value={parentContact}
+                          onChange={(e) => setParentContact(e.target.value)}
+                          required
+                        />
+                      </div>
+                    </>
+                  )}
+
+                  {role === 'hostel_attendant' && (
                     <div className="space-y-2">
-                      <Label htmlFor="rollNo">Roll Number</Label>
-                      <Input
-                        id="rollNo"
-                        value={rollNo}
-                        onChange={(e) => setRollNo(e.target.value)}
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="hostel">Hostel</Label>
+                      <Label htmlFor="hostel">Assigned Hostel</Label>
                       <Input
                         id="hostel"
                         value={hostel}
@@ -139,60 +174,38 @@ export default function Auth() {
                         required
                       />
                     </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="parentContact">Parent's Contact</Label>
-                      <Input
-                        id="parentContact"
-                        type="tel"
-                        value={parentContact}
-                        onChange={(e) => setParentContact(e.target.value)}
-                        required
-                      />
-                    </div>
-                  </>
-                )}
+                  )}
 
-                {role === 'hostel_attendant' && (
                   <div className="space-y-2">
-                    <Label htmlFor="hostel">Assigned Hostel</Label>
+                    <Label htmlFor="reg-email">Email</Label>
                     <Input
-                      id="hostel"
-                      value={hostel}
-                      onChange={(e) => setHostel(e.target.value)}
+                      id="reg-email"
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
                       required
                     />
                   </div>
-                )}
 
-                <div className="space-y-2">
-                  <Label htmlFor="reg-email">Email</Label>
-                  <Input
-                    id="reg-email"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                  />
-                </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="reg-password">Password</Label>
+                    <Input
+                      id="reg-password"
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                      minLength={6}
+                    />
+                  </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="reg-password">Password</Label>
-                  <Input
-                    id="reg-password"
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    minLength={6}
-                  />
-                </div>
-
-                <Button type="submit" className="w-full">Create Account</Button>
-              </form>
-            </TabsContent>
-          </Tabs>
-        </CardContent>
-      </Card>
+                  <Button type="submit" className="w-full">Create Account</Button>
+                </form>
+              </TabsContent>
+            </Tabs>
+          </CardContent>
+        </Card>
+      </motion.div>
     </div>
   );
 }

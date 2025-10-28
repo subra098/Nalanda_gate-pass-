@@ -181,22 +181,22 @@ export default function SuperintendentDashboard() {
         </div>
 
         <div className="grid gap-4 md:grid-cols-3">
-          <Card>
+          <Card className="hover-lift bg-white/95 backdrop-blur-sm border-education.teal/20 shadow-lg">
             <CardHeader className="pb-2">
-              <CardDescription>Pending Approval</CardDescription>
-              <CardTitle className="text-3xl">{passes.length}</CardTitle>
+              <CardDescription className="text-education.teal">Pending Approval</CardDescription>
+              <CardTitle className="text-3xl text-education.teal font-bold">{passes.length}</CardTitle>
             </CardHeader>
           </Card>
-          <Card>
+          <Card className="hover-lift bg-white/95 backdrop-blur-sm border-education.gold/20 shadow-lg">
             <CardHeader className="pb-2">
-              <CardDescription>Extension Requests</CardDescription>
-              <CardTitle className="text-3xl">{extensions.length}</CardTitle>
+              <CardDescription className="text-education.gold">Extension Requests</CardDescription>
+              <CardTitle className="text-3xl text-education.gold font-bold">{extensions.length}</CardTitle>
             </CardHeader>
           </Card>
-          <Card>
+          <Card className="hover-lift bg-white/95 backdrop-blur-sm border-education.navy/20 shadow-lg">
             <CardHeader className="pb-2">
-              <CardDescription>Total</CardDescription>
-              <CardTitle className="text-3xl">{passes.length + extensions.length}</CardTitle>
+              <CardDescription className="text-education.navy">Total</CardDescription>
+              <CardTitle className="text-3xl text-education.navy font-bold">{passes.length + extensions.length}</CardTitle>
             </CardHeader>
           </Card>
         </div>

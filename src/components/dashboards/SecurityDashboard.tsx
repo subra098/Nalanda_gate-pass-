@@ -147,33 +147,33 @@ export default function SecurityDashboard() {
         </div>
 
         <div className="grid gap-4 md:grid-cols-3">
-          <Card>
+          <Card className="hover-lift bg-white/95 backdrop-blur-sm border-education.navy/20 shadow-lg">
             <CardHeader className="pb-2">
-              <CardDescription>Total Scans Today</CardDescription>
-              <CardTitle className="text-3xl">
-                {logs.filter(l => 
+              <CardDescription className="text-education.navy">Total Scans Today</CardDescription>
+              <CardTitle className="text-3xl text-education.navy font-bold">
+                {logs.filter(l =>
                   new Date(l.timestamp).toDateString() === new Date().toDateString()
                 ).length}
               </CardTitle>
             </CardHeader>
           </Card>
-          <Card>
+          <Card className="hover-lift bg-white/95 backdrop-blur-sm border-education.burgundy/20 shadow-lg">
             <CardHeader className="pb-2">
-              <CardDescription>Exits Today</CardDescription>
-              <CardTitle className="text-3xl text-red-600">
-                {logs.filter(l => 
-                  l.action === 'exit' && 
+              <CardDescription className="text-education.burgundy">Exits Today</CardDescription>
+              <CardTitle className="text-3xl text-education.burgundy font-bold">
+                {logs.filter(l =>
+                  l.action === 'exit' &&
                   new Date(l.timestamp).toDateString() === new Date().toDateString()
                 ).length}
               </CardTitle>
             </CardHeader>
           </Card>
-          <Card>
+          <Card className="hover-lift bg-white/95 backdrop-blur-sm border-education.forest/20 shadow-lg">
             <CardHeader className="pb-2">
-              <CardDescription>Entries Today</CardDescription>
-              <CardTitle className="text-3xl text-green-600">
-                {logs.filter(l => 
-                  l.action === 'entry' && 
+              <CardDescription className="text-education.forest">Entries Today</CardDescription>
+              <CardTitle className="text-3xl text-education.forest font-bold">
+                {logs.filter(l =>
+                  l.action === 'entry' &&
                   new Date(l.timestamp).toDateString() === new Date().toDateString()
                 ).length}
               </CardTitle>

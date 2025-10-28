@@ -139,26 +139,26 @@ export default function AttendantDashboard() {
         </div>
 
         <div className="grid gap-4 md:grid-cols-3">
-          <Card>
+          <Card className="hover-lift bg-white/95 backdrop-blur-sm border-education.teal/20 shadow-lg">
             <CardHeader className="pb-2">
-              <CardDescription>Pending Review</CardDescription>
-              <CardTitle className="text-3xl">
+              <CardDescription className="text-education.teal">Pending Review</CardDescription>
+              <CardTitle className="text-3xl text-education.teal font-bold">
                 {passes.filter(p => p.status === 'pending').length}
               </CardTitle>
             </CardHeader>
           </Card>
-          <Card>
+          <Card className="hover-lift bg-white/95 backdrop-blur-sm border-education.forest/20 shadow-lg">
             <CardHeader className="pb-2">
-              <CardDescription>Forwarded</CardDescription>
-              <CardTitle className="text-3xl">
+              <CardDescription className="text-education.forest">Forwarded</CardDescription>
+              <CardTitle className="text-3xl text-education.forest font-bold">
                 {passes.filter(p => p.status === 'attendant_approved').length}
               </CardTitle>
             </CardHeader>
           </Card>
-          <Card>
+          <Card className="hover-lift bg-white/95 backdrop-blur-sm border-education.navy/20 shadow-lg">
             <CardHeader className="pb-2">
-              <CardDescription>Total Requests</CardDescription>
-              <CardTitle className="text-3xl">{passes.length}</CardTitle>
+              <CardDescription className="text-education.navy">Total Requests</CardDescription>
+              <CardTitle className="text-3xl text-education.navy font-bold">{passes.length}</CardTitle>
             </CardHeader>
           </Card>
         </div>

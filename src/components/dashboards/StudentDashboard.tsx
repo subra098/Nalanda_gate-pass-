@@ -22,7 +22,7 @@ export default function StudentDashboard() {
 
   const fetchPasses = async () => {
     if (!user) return;
-    
+
     try {
       const { data, error } = await supabase
         .from('gatepasses')
@@ -43,8 +43,8 @@ export default function StudentDashboard() {
   const stats = {
     total: passes.length,
     pending: passes.filter(p => p.status === 'pending').length,
-    approved: passes.filter(p => 
-      p.status === 'superintendent_approved' || 
+    approved: passes.filter(p =>
+      p.status === 'superintendent_approved' ||
       p.status === 'attendant_approved'
     ).length,
     active: passes.filter(p => p.status === 'exited').length,
@@ -65,28 +65,28 @@ export default function StudentDashboard() {
         </div>
 
         <div className="grid gap-4 md:grid-cols-4">
-          <Card>
+          <Card className="hover-lift bg-white/95 backdrop-blur-sm border-education.navy/20 shadow-lg">
             <CardHeader className="pb-2">
-              <CardDescription>Total Passes</CardDescription>
-              <CardTitle className="text-3xl">{stats.total}</CardTitle>
+              <CardDescription className="text-education.navy">Total Passes</CardDescription>
+              <CardTitle className="text-3xl text-education.navy font-bold">{stats.total}</CardTitle>
             </CardHeader>
           </Card>
-          <Card>
+          <Card className="hover-lift bg-white/95 backdrop-blur-sm border-education.teal/20 shadow-lg">
             <CardHeader className="pb-2">
-              <CardDescription>Pending</CardDescription>
-              <CardTitle className="text-3xl text-yellow-600">{stats.pending}</CardTitle>
+              <CardDescription className="text-education.teal">Pending</CardDescription>
+              <CardTitle className="text-3xl text-education.teal font-bold">{stats.pending}</CardTitle>
             </CardHeader>
           </Card>
-          <Card>
+          <Card className="hover-lift bg-white/95 backdrop-blur-sm border-education.forest/20 shadow-lg">
             <CardHeader className="pb-2">
-              <CardDescription>Approved</CardDescription>
-              <CardTitle className="text-3xl text-green-600">{stats.approved}</CardTitle>
+              <CardDescription className="text-education.forest">Approved</CardDescription>
+              <CardTitle className="text-3xl text-education.forest font-bold">{stats.approved}</CardTitle>
             </CardHeader>
           </Card>
-          <Card>
+          <Card className="hover-lift bg-white/95 backdrop-blur-sm border-education.gold/20 shadow-lg">
             <CardHeader className="pb-2">
-              <CardDescription>Currently Out</CardDescription>
-              <CardTitle className="text-3xl text-blue-600">{stats.active}</CardTitle>
+              <CardDescription className="text-education.gold">Currently Out</CardDescription>
+              <CardTitle className="text-3xl text-education.gold font-bold">{stats.active}</CardTitle>
             </CardHeader>
           </Card>
         </div>
@@ -114,8 +114,8 @@ export default function StudentDashboard() {
         </Card>
       </div>
 
-      <ApplyPassDialog 
-        open={showApplyDialog} 
+      <ApplyPassDialog
+        open={showApplyDialog}
         onOpenChange={setShowApplyDialog}
         onSuccess={fetchPasses}
       />
