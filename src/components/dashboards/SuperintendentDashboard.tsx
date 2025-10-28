@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Layout from '@/components/Layout';
 import { toast } from 'sonner';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
 
 export default function SuperintendentDashboard() {
   const { user } = useAuth();
@@ -172,6 +173,25 @@ export default function SuperintendentDashboard() {
     }
   };
 
+  // Chart data - weekly approval trends
+  const approvalData = passes.slice(0, 7).map((pass, index) => ({
+    day: new Date(pass.created_at).toLocaleDateString('en-US', { weekday: 'short' }),
+    passes: passes.filter(p => 
+      new Date(p.created_at).toDateString() === new Date(pass.created_at).toDateString()
+    ).length
+  }));
+
+  const hostelData = passes.reduce((acc: any[], pass) => {
+    const hostel = pass.profiles?.hostel || 'Unknown';
+    const existing = acc.find(item => item.name === hostel);
+    if (existing) {
+      existing.value++;
+    } else {
+      acc.push({ name: hostel, value: 1 });
+    }
+    return acc;
+  }, []);
+
   return (
     <Layout>
       <div className="space-y-6">
@@ -198,6 +218,44 @@ export default function SuperintendentDashboard() {
               <CardDescription className="text-education.navy">Total</CardDescription>
               <CardTitle className="text-3xl text-education.navy font-bold">{passes.length + extensions.length}</CardTitle>
             </CardHeader>
+          </Card>
+        </div>
+
+        <div className="grid gap-6 md:grid-cols-2">
+          <Card>
+            <CardHeader>
+              <CardTitle>Weekly Pass Trends</CardTitle>
+              <CardDescription>Recent pass approval activity</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={250}>
+                <AreaChart data={approvalData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="day" />
+                  <YAxis />
+                  <Tooltip />
+                  <Area type="monotone" dataKey="passes" stroke="hsl(var(--education-navy))" fill="hsl(var(--education-teal))" />
+                </AreaChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Passes by Hostel</CardTitle>
+              <CardDescription>Distribution across hostels</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={250}>
+                <BarChart data={hostelData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" />
+                  <YAxis />
+                  <Tooltip />
+                  <Bar dataKey="value" fill="hsl(var(--education-forest))" />
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
           </Card>
         </div>
 

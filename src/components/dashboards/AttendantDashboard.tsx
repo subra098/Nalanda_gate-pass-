@@ -9,6 +9,7 @@ import Layout from '@/components/Layout';
 import { toast } from 'sonner';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 
 export default function AttendantDashboard() {
   const { user } = useAuth();
@@ -152,6 +153,23 @@ export default function AttendantDashboard() {
     return variants[status] || { label: status, variant: 'outline' };
   };
 
+  // Chart data
+  const statusChartData = [
+    { name: 'Pending', value: passes.filter(p => p.status === 'pending').length, color: 'hsl(var(--education-teal))' },
+    { name: 'Forwarded', value: passes.filter(p => p.status === 'attendant_approved').length, color: 'hsl(var(--education-forest))' },
+  ].filter(item => item.value > 0);
+
+  const destinationData = passes.reduce((acc: any[], pass) => {
+    const dest = pass.destination_type || 'Unknown';
+    const existing = acc.find(item => item.name === dest);
+    if (existing) {
+      existing.value++;
+    } else {
+      acc.push({ name: dest, value: 1 });
+    }
+    return acc;
+  }, []);
+
   return (
     <Layout>
       <div className="space-y-6">
@@ -182,6 +200,54 @@ export default function AttendantDashboard() {
               <CardDescription className="text-education.navy">Total Requests</CardDescription>
               <CardTitle className="text-3xl text-education.navy font-bold">{passes.length}</CardTitle>
             </CardHeader>
+          </Card>
+        </div>
+
+        <div className="grid gap-6 md:grid-cols-2">
+          <Card>
+            <CardHeader>
+              <CardTitle>Pass Status Overview</CardTitle>
+              <CardDescription>Current pass distribution</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={250}>
+                <BarChart data={statusChartData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" />
+                  <YAxis />
+                  <Tooltip />
+                  <Bar dataKey="value" fill="hsl(var(--education-teal))" />
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Destination Types</CardTitle>
+              <CardDescription>Pass requests by destination</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={250}>
+                <PieChart>
+                  <Pie
+                    data={destinationData}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                    outerRadius={80}
+                    fill="#8884d8"
+                    dataKey="value"
+                  >
+                    {destinationData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={`hsl(${index * 50}, 70%, 50%)`} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+            </CardContent>
           </Card>
         </div>
 

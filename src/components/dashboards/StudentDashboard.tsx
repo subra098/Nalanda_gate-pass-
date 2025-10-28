@@ -9,6 +9,7 @@ import Layout from '@/components/Layout';
 import ApplyPassDialog from '@/components/student/ApplyPassDialog';
 import PassCard from '@/components/student/PassCard';
 import { toast } from 'sonner';
+import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
 
 export default function StudentDashboard() {
   const { user } = useAuth();
@@ -50,6 +51,26 @@ export default function StudentDashboard() {
     active: passes.filter(p => p.status === 'exited').length,
   };
 
+  // Chart data
+  const statusData = [
+    { name: 'Pending', value: stats.pending, color: 'hsl(var(--education-teal))' },
+    { name: 'Approved', value: stats.approved, color: 'hsl(var(--education-forest))' },
+    { name: 'Active', value: stats.active, color: 'hsl(var(--education-gold))' },
+    { name: 'Rejected', value: passes.filter(p => p.status === 'rejected').length, color: 'hsl(var(--education-burgundy))' },
+  ].filter(item => item.value > 0);
+
+  // Monthly pass data
+  const monthlyData = passes.reduce((acc: any[], pass) => {
+    const month = new Date(pass.created_at).toLocaleDateString('en-US', { month: 'short' });
+    const existing = acc.find(item => item.month === month);
+    if (existing) {
+      existing.count++;
+    } else {
+      acc.push({ month, count: 1 });
+    }
+    return acc;
+  }, []);
+
   return (
     <Layout>
       <div className="space-y-6">
@@ -88,6 +109,54 @@ export default function StudentDashboard() {
               <CardDescription className="text-education.gold">Currently Out</CardDescription>
               <CardTitle className="text-3xl text-education.gold font-bold">{stats.active}</CardTitle>
             </CardHeader>
+          </Card>
+        </div>
+
+        <div className="grid gap-6 md:grid-cols-2">
+          <Card>
+            <CardHeader>
+              <CardTitle>Pass Status Distribution</CardTitle>
+              <CardDescription>Overview of your pass statuses</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={250}>
+                <PieChart>
+                  <Pie
+                    data={statusData}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                    outerRadius={80}
+                    fill="#8884d8"
+                    dataKey="value"
+                  >
+                    {statusData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Monthly Pass Requests</CardTitle>
+              <CardDescription>Number of passes by month</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={250}>
+                <BarChart data={monthlyData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="month" />
+                  <YAxis />
+                  <Tooltip />
+                  <Bar dataKey="count" fill="hsl(var(--education-navy))" />
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
           </Card>
         </div>
 

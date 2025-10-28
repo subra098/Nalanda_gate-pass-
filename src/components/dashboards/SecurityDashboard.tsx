@@ -8,6 +8,7 @@ import { ScanLine, LogOut as ExitIcon, LogIn as EntryIcon, Trash2 } from 'lucide
 import Layout from '@/components/Layout';
 import { toast } from 'sonner';
 import QRScanner from '@/components/security/QRScanner';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 
 export default function SecurityDashboard() {
   const { user } = useAuth();
@@ -165,6 +166,25 @@ export default function SecurityDashboard() {
     }
   };
 
+  // Chart data - hourly activity
+  const hourlyData = logs.reduce((acc: any[], log) => {
+    const hour = new Date(log.timestamp).getHours();
+    const hourLabel = `${hour}:00`;
+    const existing = acc.find(item => item.hour === hourLabel);
+    if (existing) {
+      existing.count++;
+    } else {
+      acc.push({ hour: hourLabel, count: 1 });
+    }
+    return acc;
+  }, []).slice(0, 12);
+
+  // Exit vs Entry data
+  const activityData = [
+    { name: 'Exits', value: logs.filter(l => l.action === 'exit').length, color: 'hsl(var(--education-burgundy))' },
+    { name: 'Entries', value: logs.filter(l => l.action === 'entry').length, color: 'hsl(var(--education-forest))' },
+  ].filter(item => item.value > 0);
+
   return (
     <Layout>
       <div className="space-y-6">
@@ -211,6 +231,54 @@ export default function SecurityDashboard() {
                 ).length}
               </CardTitle>
             </CardHeader>
+          </Card>
+        </div>
+
+        <div className="grid gap-6 md:grid-cols-2">
+          <Card>
+            <CardHeader>
+              <CardTitle>Hourly Gate Activity</CardTitle>
+              <CardDescription>Entry and exit patterns</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={250}>
+                <LineChart data={hourlyData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="hour" />
+                  <YAxis />
+                  <Tooltip />
+                  <Line type="monotone" dataKey="count" stroke="hsl(var(--education-navy))" strokeWidth={2} />
+                </LineChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Activity Distribution</CardTitle>
+              <CardDescription>Exits vs entries</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={250}>
+                <PieChart>
+                  <Pie
+                    data={activityData}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                    outerRadius={80}
+                    fill="#8884d8"
+                    dataKey="value"
+                  >
+                    {activityData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+            </CardContent>
           </Card>
         </div>
 
