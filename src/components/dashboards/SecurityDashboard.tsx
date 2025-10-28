@@ -4,7 +4,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ScanLine, LogOut as ExitIcon, LogIn as EntryIcon } from 'lucide-react';
+import { ScanLine, LogOut as ExitIcon, LogIn as EntryIcon, Trash2 } from 'lucide-react';
 import Layout from '@/components/Layout';
 import { toast } from 'sonner';
 import QRScanner from '@/components/security/QRScanner';
@@ -14,6 +14,8 @@ export default function SecurityDashboard() {
   const [logs, setLogs] = useState<any[]>([]);
   const [showScanner, setShowScanner] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [scannedPass, setScannedPass] = useState<any>(null);
+  const [showPassDetails, setShowPassDetails] = useState(false);
 
   useEffect(() => {
     fetchLogs();
@@ -63,7 +65,7 @@ export default function SecurityDashboard() {
       const data = JSON.parse(qrData);
       const { passId } = data;
 
-      // Fetch the pass
+      // Fetch the pass with student profile
       const { data: pass, error: passError } = await supabase
         .from('gatepasses')
         .select('*')
@@ -73,6 +75,17 @@ export default function SecurityDashboard() {
       if (passError || !pass) {
         toast.error('Invalid QR code');
         return;
+      }
+
+      // Fetch student profile
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', pass.student_id)
+        .single();
+
+      if (profileError) {
+        console.error('Error fetching profile:', profileError);
       }
 
       // Check if pass is approved
@@ -111,8 +124,11 @@ export default function SecurityDashboard() {
 
       if (updateError) throw updateError;
 
-      toast.success(`${action === 'exit' ? 'Exit' : 'Entry'} recorded successfully`);
+      // Show pass details
+      setScannedPass({ ...pass, profile, action });
       setShowScanner(false);
+      setShowPassDetails(true);
+      toast.success(`${action === 'exit' ? 'Exit' : 'Entry'} recorded successfully`);
       fetchLogs();
     } catch (error) {
       console.error('Error:', error);
@@ -130,6 +146,23 @@ export default function SecurityDashboard() {
     ) : (
       <Badge className="bg-green-600">Entry</Badge>
     );
+  };
+
+  const handleDeleteLog = async (logId: string) => {
+    try {
+      const { error } = await supabase
+        .from('gate_logs')
+        .delete()
+        .eq('id', logId);
+
+      if (error) throw error;
+
+      toast.success('Activity deleted successfully');
+      fetchLogs();
+    } catch (error) {
+      console.error('Error deleting log:', error);
+      toast.error('Failed to delete activity');
+    }
   };
 
   return (
@@ -209,11 +242,21 @@ export default function SecurityDashboard() {
                         </p>
                       </div>
                     </div>
-                    <div className="text-right">
-                      {getActionBadge(log.action)}
-                      <p className="text-sm text-muted-foreground mt-1">
-                        {new Date(log.timestamp).toLocaleString()}
-                      </p>
+                    <div className="flex items-center gap-3">
+                      <div className="text-right">
+                        {getActionBadge(log.action)}
+                        <p className="text-sm text-muted-foreground mt-1">
+                          {new Date(log.timestamp).toLocaleString()}
+                        </p>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleDeleteLog(log.id)}
+                        className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
                     </div>
                   </div>
                 ))}
@@ -228,6 +271,86 @@ export default function SecurityDashboard() {
           onScan={handleScan}
           onClose={() => setShowScanner(false)}
         />
+      )}
+
+      {showPassDetails && scannedPass && (
+        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <Card className="w-full max-w-2xl">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle>Pass Details</CardTitle>
+                <Button 
+                  variant="ghost" 
+                  size="icon"
+                  onClick={() => setShowPassDetails(false)}
+                >
+                  <span className="sr-only">Close</span>
+                  ×
+                </Button>
+              </div>
+              <div className="flex items-center gap-2 mt-2">
+                {getActionBadge(scannedPass.action)}
+                <Badge variant="outline">
+                  {scannedPass.status}
+                </Badge>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div>
+                <h3 className="text-lg font-semibold mb-4 text-primary">Student Details</h3>
+                <div className="grid gap-4 md:grid-cols-2 p-4 bg-muted/50 rounded-lg">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Student Name</p>
+                    <p className="font-semibold text-lg">{scannedPass.profile?.full_name || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Roll Number</p>
+                    <p className="font-semibold text-lg">{scannedPass.profile?.roll_no || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Hostel</p>
+                    <p className="font-semibold text-lg">{scannedPass.profile?.hostel || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Contact Number</p>
+                    <p className="font-semibold text-lg">{scannedPass.profile?.parent_contact || 'N/A'}</p>
+                  </div>
+                </div>
+              </div>
+              
+              <div>
+                <h3 className="text-lg font-semibold mb-4 text-primary">Pass Information</h3>
+                <div className="space-y-3">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Destination Type</p>
+                    <p className="font-semibold capitalize">{scannedPass.destination_type.replace('_', ' ')}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Destination Details</p>
+                    <p className="font-semibold">{scannedPass.destination_details}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Reason</p>
+                    <p className="font-semibold">{scannedPass.reason}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Expected Return</p>
+                    <p className="font-semibold">
+                      {new Date(scannedPass.expected_return_at).toLocaleString()}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <Button 
+                onClick={() => setShowPassDetails(false)} 
+                className="w-full"
+              >
+                Close
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
       )}
     </Layout>
   );

@@ -128,11 +128,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = async () => {
     const { error } = await supabase.auth.signOut();
-    if (error) {
+    // Clear local state even if session doesn't exist on server
+    setRole(null);
+    setUser(null);
+    setSession(null);
+    
+    // Only show error if it's not a session_not_found error
+    if (error && error.message !== 'Session from session_id claim in JWT does not exist') {
       toast.error(error.message);
       throw error;
     }
-    setRole(null);
+    
     navigate('/auth');
     toast.success('Signed out successfully');
   };
