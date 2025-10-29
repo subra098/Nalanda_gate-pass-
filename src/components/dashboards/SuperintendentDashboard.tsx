@@ -14,10 +14,14 @@ export default function SuperintendentDashboard() {
   const { user } = useAuth();
   const [passes, setPasses] = useState<any[]>([]);
   const [extensions, setExtensions] = useState<any[]>([]);
+  const [todaysApprovals, setTodaysApprovals] = useState<any[]>([]);
+  const [approvedPasses, setApprovedPasses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchData();
+    fetchTodaysApprovals();
+    fetchApprovedPasses();
   }, []);
 
   const fetchData = async () => {
@@ -100,6 +104,94 @@ export default function SuperintendentDashboard() {
     }
   };
 
+  const fetchTodaysApprovals = async () => {
+    if (!user) return;
+
+    try {
+      const startOfDay = new Date();
+      startOfDay.setHours(0, 0, 0, 0);
+
+      // Fetch today's approved passes by this superintendent
+      const { data: approvalsData, error: approvalsError } = await supabase
+        .from('gatepasses')
+        .select('*')
+        .eq('superintendent_id', user.id)
+        .eq('status', 'superintendent_approved')
+        .gte('created_at', startOfDay.toISOString())
+        .order('created_at', { ascending: false });
+
+      if (approvalsError) throw approvalsError;
+
+      // Get student profiles for these passes
+      if (approvalsData && approvalsData.length > 0) {
+        const studentIds = approvalsData.map(p => p.student_id);
+        const { data: profilesData, error: profilesError } = await supabase
+          .from('profiles')
+          .select('id, full_name, roll_no, parent_contact, hostel')
+          .in('id', studentIds);
+
+        if (profilesError) throw profilesError;
+
+        // Manually join profiles with passes
+        const approvalsWithProfiles = approvalsData.map(pass => ({
+          ...pass,
+          profiles: profilesData?.find(p => p.id === pass.student_id)
+        }));
+
+        setTodaysApprovals(approvalsWithProfiles);
+      } else {
+        setTodaysApprovals([]);
+      }
+    } catch (error) {
+      console.error('Error fetching today\'s approvals:', error);
+      toast.error('Failed to load today\'s approvals');
+    }
+  };
+
+  const fetchApprovedPasses = async () => {
+    if (!user) return;
+
+    try {
+      // Fetch all approved passes by this superintendent (last 7 days for trends)
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+      const { data: approvedData, error: approvedError } = await supabase
+        .from('gatepasses')
+        .select('*')
+        .eq('superintendent_id', user.id)
+        .eq('status', 'superintendent_approved')
+        .gte('created_at', sevenDaysAgo.toISOString())
+        .order('created_at', { ascending: false });
+
+      if (approvedError) throw approvedError;
+
+      // Get student profiles for these passes
+      if (approvedData && approvedData.length > 0) {
+        const studentIds = approvedData.map(p => p.student_id);
+        const { data: profilesData, error: profilesError } = await supabase
+          .from('profiles')
+          .select('id, full_name, roll_no, hostel')
+          .in('id', studentIds);
+
+        if (profilesError) throw profilesError;
+
+        // Manually join profiles with passes
+        const approvedWithProfiles = approvedData.map(pass => ({
+          ...pass,
+          profiles: profilesData?.find(p => p.id === pass.student_id)
+        }));
+
+        setApprovedPasses(approvedWithProfiles);
+      } else {
+        setApprovedPasses([]);
+      }
+    } catch (error) {
+      console.error('Error fetching approved passes:', error);
+      toast.error('Failed to load approved passes');
+    }
+  };
+
   const handleApprovePass = async (passId: string, notes: string = '') => {
     try {
       // Generate QR code data
@@ -122,6 +214,8 @@ export default function SuperintendentDashboard() {
 
       toast.success('Pass approved! QR code generated.');
       fetchData();
+      fetchTodaysApprovals();
+      fetchApprovedPasses();
     } catch (error) {
       console.error('Error:', error);
       toast.error('Failed to approve pass');
@@ -174,14 +268,14 @@ export default function SuperintendentDashboard() {
   };
 
   // Chart data - weekly approval trends
-  const approvalData = passes.slice(0, 7).map((pass, index) => ({
+  const approvalData = approvedPasses.slice(0, 7).map((pass, index) => ({
     day: new Date(pass.created_at).toLocaleDateString('en-US', { weekday: 'short' }),
-    passes: passes.filter(p => 
+    passes: approvedPasses.filter(p =>
       new Date(p.created_at).toDateString() === new Date(pass.created_at).toDateString()
     ).length
   }));
 
-  const hostelData = passes.reduce((acc: any[], pass) => {
+  const hostelData = approvedPasses.reduce((acc: any[], pass) => {
     const hostel = pass.profiles?.hostel || 'Unknown';
     const existing = acc.find(item => item.name === hostel);
     if (existing) {
@@ -200,7 +294,7 @@ export default function SuperintendentDashboard() {
           <p className="text-muted-foreground">Final approval and oversight</p>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-4">
           <Card className="hover-lift bg-white/95 backdrop-blur-sm border-education.teal/20 shadow-lg">
             <CardHeader className="pb-2">
               <CardDescription className="text-education.teal">Pending Approval</CardDescription>
@@ -217,6 +311,12 @@ export default function SuperintendentDashboard() {
             <CardHeader className="pb-2">
               <CardDescription className="text-education.navy">Total</CardDescription>
               <CardTitle className="text-3xl text-education.navy font-bold">{passes.length + extensions.length}</CardTitle>
+            </CardHeader>
+          </Card>
+          <Card className="hover-lift bg-white/95 backdrop-blur-sm border-education.forest/20 shadow-lg">
+            <CardHeader className="pb-2">
+              <CardDescription className="text-education.forest">Today's Approvals</CardDescription>
+              <CardTitle className="text-3xl text-education.forest font-bold">{todaysApprovals.length}</CardTitle>
             </CardHeader>
           </Card>
         </div>
@@ -297,6 +397,7 @@ export default function SuperintendentDashboard() {
           <TabsList>
             <TabsTrigger value="passes">Pass Requests</TabsTrigger>
             <TabsTrigger value="extensions">Time Extensions</TabsTrigger>
+            <TabsTrigger value="approved">Today's Approvals</TabsTrigger>
           </TabsList>
 
           <TabsContent value="passes">
@@ -380,6 +481,47 @@ export default function SuperintendentDashboard() {
                             <Button size="sm" variant="destructive">
                               Reject
                             </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="approved">
+            <Card>
+              <CardHeader>
+                <CardTitle>Today's Approved Passes</CardTitle>
+                <CardDescription>Passes approved by you today</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {todaysApprovals.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">No approvals today</div>
+                ) : (
+                  <div className="space-y-4">
+                    {todaysApprovals.map((pass) => (
+                      <Card key={pass.id}>
+                        <CardContent className="pt-6 space-y-4">
+                          <div className="flex justify-between">
+                            <div>
+                              <p className="font-semibold">{pass.profiles?.full_name}</p>
+                              <p className="text-sm text-muted-foreground">
+                                {pass.profiles?.roll_no} • {pass.profiles?.hostel}
+                              </p>
+                            </div>
+                            <Badge variant="default">Fully Approved</Badge>
+                          </div>
+                          <div className="space-y-2 text-sm">
+                            <p><strong>Destination:</strong> {pass.destination_type} - {pass.destination_details}</p>
+                            <p><strong>Reason:</strong> {pass.reason}</p>
+                            <p><strong>Expected Return:</strong> {new Date(pass.expected_return_at).toLocaleString()}</p>
+                            <p><strong>Approved At:</strong> {new Date(pass.updated_at).toLocaleString()}</p>
+                            {pass.superintendent_notes && (
+                              <p><strong>Your Notes:</strong> {pass.superintendent_notes}</p>
+                            )}
                           </div>
                         </CardContent>
                       </Card>

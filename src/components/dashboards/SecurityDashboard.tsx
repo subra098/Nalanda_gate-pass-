@@ -4,6 +4,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScanLine, LogOut as ExitIcon, LogIn as EntryIcon, Trash2 } from 'lucide-react';
 import Layout from '@/components/Layout';
 import { toast } from 'sonner';
@@ -17,6 +18,7 @@ export default function SecurityDashboard() {
   const [loading, setLoading] = useState(true);
   const [scannedPass, setScannedPass] = useState<any>(null);
   const [showPassDetails, setShowPassDetails] = useState(false);
+  const [activeTab, setActiveTab] = useState('all');
 
   useEffect(() => {
     fetchLogs();
@@ -166,8 +168,11 @@ export default function SecurityDashboard() {
     }
   };
 
+  // Filter logs based on active tab
+  const filteredLogs = activeTab === 'all' ? logs : logs.filter(log => log.gatepasses?.destination_type === activeTab);
+
   // Chart data - hourly activity
-  const hourlyData = logs.reduce((acc: any[], log) => {
+  const hourlyData = filteredLogs.reduce((acc: any[], log) => {
     const hour = new Date(log.timestamp).getHours();
     const hourLabel = `${hour}:00`;
     const existing = acc.find(item => item.hour === hourLabel);
@@ -181,8 +186,8 @@ export default function SecurityDashboard() {
 
   // Exit vs Entry data with vibrant colors
   const activityData = [
-    { name: 'Exits', value: logs.filter(l => l.action === 'exit').length, color: '#DC2626' },
-    { name: 'Entries', value: logs.filter(l => l.action === 'entry').length, color: '#059669' },
+    { name: 'Exits', value: filteredLogs.filter(l => l.action === 'exit').length, color: '#DC2626' },
+    { name: 'Entries', value: filteredLogs.filter(l => l.action === 'entry').length, color: '#059669' },
   ].filter(item => item.value > 0);
 
   return (
@@ -204,7 +209,7 @@ export default function SecurityDashboard() {
             <CardHeader className="pb-2">
               <CardDescription className="text-education.navy">Total Scans Today</CardDescription>
               <CardTitle className="text-3xl text-education.navy font-bold">
-                {logs.filter(l =>
+                {filteredLogs.filter(l =>
                   new Date(l.timestamp).toDateString() === new Date().toDateString()
                 ).length}
               </CardTitle>
@@ -214,7 +219,7 @@ export default function SecurityDashboard() {
             <CardHeader className="pb-2">
               <CardDescription className="text-education.burgundy">Exits Today</CardDescription>
               <CardTitle className="text-3xl text-education.burgundy font-bold">
-                {logs.filter(l =>
+                {filteredLogs.filter(l =>
                   l.action === 'exit' &&
                   new Date(l.timestamp).toDateString() === new Date().toDateString()
                 ).length}
@@ -225,7 +230,7 @@ export default function SecurityDashboard() {
             <CardHeader className="pb-2">
               <CardDescription className="text-education.forest">Entries Today</CardDescription>
               <CardTitle className="text-3xl text-education.forest font-bold">
-                {logs.filter(l =>
+                {filteredLogs.filter(l =>
                   l.action === 'entry' &&
                   new Date(l.timestamp).toDateString() === new Date().toDateString()
                 ).length}
@@ -321,56 +326,67 @@ export default function SecurityDashboard() {
           </Card>
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Recent Activity</CardTitle>
-            <CardDescription>Entry and exit logs</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <div className="text-center py-8">Loading...</div>
-            ) : logs.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">No activity yet</div>
-            ) : (
-              <div className="space-y-3">
-                {logs.map((log) => (
-                  <div 
-                    key={log.id}
-                    className="flex items-center justify-between p-4 border rounded-lg"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className="p-2 bg-muted rounded">
-                        {getActionIcon(log.action)}
-                      </div>
-                      <div>
-                        <p className="font-semibold">Pass ID: {log.gatepass_id?.substring(0, 8)}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {log.action === 'exit' ? 'Student exited' : 'Student returned'}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <div className="text-right">
-                        {getActionBadge(log.action)}
-                        <p className="text-sm text-muted-foreground mt-1">
-                          {new Date(log.timestamp).toLocaleString()}
-                        </p>
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleDeleteLog(log.id)}
-                        className="text-destructive hover:text-destructive hover:bg-destructive/10"
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="all">All</TabsTrigger>
+            <TabsTrigger value="chandaka">Chandaka</TabsTrigger>
+            <TabsTrigger value="bhubaneswar">Bhubaneswar</TabsTrigger>
+            <TabsTrigger value="home_other">Home/Other</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value={activeTab} className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Recent Activity</CardTitle>
+                <CardDescription>Entry and exit logs</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {loading ? (
+                  <div className="text-center py-8">Loading...</div>
+                ) : filteredLogs.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">No activity yet</div>
+                ) : (
+                  <div className="space-y-3">
+                    {filteredLogs.map((log) => (
+                      <div
+                        key={log.id}
+                        className="flex items-center justify-between p-4 border rounded-lg"
                       >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
+                        <div className="flex items-center gap-4">
+                          <div className="p-2 bg-muted rounded">
+                            {getActionIcon(log.action)}
+                          </div>
+                          <div>
+                            <p className="font-semibold">Pass ID: {log.gatepass_id?.substring(0, 8)}</p>
+                            <p className="text-sm text-muted-foreground">
+                              {log.action === 'exit' ? 'Student exited' : 'Student returned'}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <div className="text-right">
+                            {getActionBadge(log.action)}
+                            <p className="text-sm text-muted-foreground mt-1">
+                              {new Date(log.timestamp).toLocaleString()}
+                            </p>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleDeleteLog(log.id)}
+                            className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
 
       {showScanner && (
