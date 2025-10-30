@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ScanLine, LogOut as ExitIcon, LogIn as EntryIcon, Trash2 } from 'lucide-react';
+import { ScanLine, LogOut as ExitIcon, LogIn as EntryIcon, Trash2, User } from 'lucide-react';
 import Layout from '@/components/Layout';
 import { toast } from 'sonner';
 import QRScanner from '@/components/security/QRScanner';
@@ -19,9 +19,12 @@ export default function SecurityDashboard() {
   const [scannedPass, setScannedPass] = useState<any>(null);
   const [showPassDetails, setShowPassDetails] = useState(false);
   const [activeTab, setActiveTab] = useState('all');
+  const [profile, setProfile] = useState<any>(null);
+  const [showProfile, setShowProfile] = useState(false);
 
   useEffect(() => {
     fetchLogs();
+    fetchProfile();
   }, []);
 
   const fetchLogs = async () => {
@@ -60,6 +63,27 @@ export default function SecurityDashboard() {
       toast.error('Failed to load logs');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchProfile = async () => {
+    if (!user) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+
+      if (error) {
+        console.error('Error fetching profile:', error);
+        // Don't show toast for profile fetch errors, as it's not critical
+      } else {
+        setProfile(data);
+      }
+    } catch (error) {
+      console.error('Error fetching profile:', error);
     }
   };
 
@@ -193,10 +217,42 @@ export default function SecurityDashboard() {
   return (
     <Layout>
       <div className="space-y-6">
+        {profile && showProfile && (
+          <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950 dark:to-indigo-950 border-education.navy/20">
+            <CardHeader>
+              <CardTitle className="text-education-navy dark:text-white">My Profile</CardTitle>
+              <CardDescription>Security guard information and details</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                <div>
+                  <p className="text-sm text-muted-foreground">Full Name</p>
+                  <p className="font-semibold text-lg">{profile.full_name || ''}</p>
+                </div>
+
+                <div>
+                  <p className="text-sm text-muted-foreground">College Email</p>
+                  <p className="font-semibold text-lg">{profile.college_email || ''}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-3xl font-bold">Security Dashboard</h2>
-            <p className="text-muted-foreground">Scan and verify gatepasses</p>
+          <div className="flex items-center gap-4">
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => setShowProfile(!showProfile)}
+              className="hover:bg-blue-50"
+            >
+              <User className="h-4 w-4" />
+            </Button>
+            <div>
+              <h2 className="text-3xl font-bold">Security Dashboard</h2>
+              <p className="text-muted-foreground">Scan and verify gatepasses</p>
+            </div>
           </div>
           <Button onClick={() => setShowScanner(true)} size="lg">
             <ScanLine className="h-5 w-5 mr-2" />
@@ -424,19 +480,19 @@ export default function SecurityDashboard() {
                 <div className="grid gap-4 md:grid-cols-2 p-4 bg-muted/50 rounded-lg">
                   <div>
                     <p className="text-sm text-muted-foreground">Student Name</p>
-                    <p className="font-semibold text-lg">{scannedPass.profile?.full_name || 'N/A'}</p>
+                    <p className="font-semibold text-lg">{scannedPass.profile?.full_name || ''}</p>
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">Roll Number</p>
-                    <p className="font-semibold text-lg">{scannedPass.profile?.roll_no || 'N/A'}</p>
+                    <p className="font-semibold text-lg">{scannedPass.profile?.roll_no || ''}</p>
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">Hostel</p>
-                    <p className="font-semibold text-lg">{scannedPass.profile?.hostel || 'N/A'}</p>
+                    <p className="font-semibold text-lg">{scannedPass.profile?.hostel || ''}</p>
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">Contact Number</p>
-                    <p className="font-semibold text-lg">{scannedPass.profile?.parent_contact || 'N/A'}</p>
+                    <p className="font-semibold text-lg">{scannedPass.profile?.parent_contact || ''}</p>
                   </div>
                 </div>
               </div>

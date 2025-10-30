@@ -6,15 +6,15 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const { user, role, signOut } = useAuth();
 
   return (
-    <div className="min-h-screen bg-gradient-authority">
-      <header className="border-b bg-white/10 backdrop-blur-sm border-white/20">
+    <div className="min-h-screen bg-gray-50">
+      <header className="border-b bg-white border-gray-200">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Shield className="h-6 w-6 text-white glow-purple" />
+            <Shield className="h-6 w-6 text-gray-700" />
             <div>
-              <h1 className="text-xl font-bold text-white">Digital Gatepass</h1>
+              <h1 className="text-xl font-bold text-gray-900">Digital Gatepass</h1>
               {role && (
-                <p className="text-sm text-white/80 capitalize">
+                <p className="text-sm text-gray-600 capitalize">
                   {role.replace('_', ' ')}
                 </p>
               )}
@@ -25,7 +25,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               variant="ghost"
               size="sm"
               onClick={signOut}
-              className="text-white hover:bg-white/20 hover-glow-teal"
+              className="text-gray-700 hover:bg-gray-100"
             >
               <LogOut className="h-4 w-4 mr-2" />
               Sign Out

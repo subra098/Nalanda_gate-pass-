@@ -1,18 +1,13 @@
-# TODO: Add Today's Approvals Section to Dashboards
+# TODO: Add Profile Icon to Security Dashboard
 
-## AttendantDashboard.tsx
-- [ ] Add state for todaysApprovals
-- [ ] Add fetchTodaysApprovals function (query attendant_id == user.id, status in ['attendant_approved', 'superintendent_approved'], created_at >= startOfDay, join with profiles)
-- [ ] Call fetchTodaysApprovals in useEffect
-- [ ] Add UI Card after existing grid: "Today's Approvals" with count and expandable list of pass details
-
-## SuperintendentDashboard.tsx
-- [ ] Add state for todaysApprovals
-- [ ] Add fetchTodaysApprovals function (query superintendent_id == user.id, status == 'superintendent_approved', created_at >= startOfDay, join with profiles)
-- [ ] Call fetchTodaysApprovals in useEffect
-- [ ] Add UI Card after existing grid: "Today's Approvals" with count and expandable list of pass details
-
-## Testing
-- [ ] Test AttendantDashboard for correct today's approvals display
-- [ ] Test SuperintendentDashboard for correct today's approvals display
-- [ ] Verify date filtering and list details
+- [ ] Add profile state variables (profile, showProfile) to SecurityDashboard.tsx
+- [ ] Implement fetchProfile function to query profiles table for current user
+- [ ] Call fetchProfile in useEffect alongside fetchLogs
+- [ ] Add profile icon button (User icon) to the header next to the title
+- [ ] Implement toggle functionality for showProfile on icon click
+- [ ] Add conditional rendering for profile display card above main content
+- [ ] Display profile fields (full_name, roll_no, hostel, parent_contact, college_email) in the card
+- [ ] Handle case when profile is null (show fallback message or user email)
+- [ ] Add loading state and error handling for profile fetch
+- [ ] Test profile icon click and display functionality
+- [ ] Verify integration with existing dashboard features

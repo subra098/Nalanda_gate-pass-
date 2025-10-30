@@ -4,7 +4,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { CheckCircle, XCircle, Phone } from 'lucide-react';
+import { CheckCircle, XCircle, Phone, User } from 'lucide-react';
 import Layout from '@/components/Layout';
 import { toast } from 'sonner';
 import { Textarea } from '@/components/ui/textarea';
@@ -20,10 +20,13 @@ export default function AttendantDashboard() {
   const [selectedPass, setSelectedPass] = useState<any>(null);
   const [notes, setNotes] = useState('');
   const [hostel, setHostel] = useState('');
+  const [profile, setProfile] = useState<any>(null);
+  const [showProfile, setShowProfile] = useState(false);
 
   useEffect(() => {
     fetchHostelAndPasses();
     fetchTodaysApprovals();
+    fetchProfile();
   }, [user]);
 
   const fetchHostelAndPasses = async () => {
@@ -218,15 +221,59 @@ export default function AttendantDashboard() {
     return acc;
   }, []);
 
+  const fetchProfile = async () => {
+    if (!user) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('full_name, roll_no, hostel, parent_contact, college_email')
+        .eq('id', user.id)
+        .single();
+
+      if (error) throw error;
+      setProfile(data);
+    } catch (error) {
+      console.error('Error fetching profile:', error);
+      toast.error('Failed to load profile');
+    }
+  };
+
   const DESTINATION_COLORS = ['#8B5CF6', '#EC4899', '#F97316', '#14B8A6', '#3B82F6', '#EF4444'];
 
   return (
     <Layout>
       <div className="space-y-6">
-        <div>
-          <h2 className="text-3xl font-bold">Attendant Dashboard</h2>
-          <p className="text-muted-foreground">Review and approve gatepass requests for {hostel}</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-3xl font-bold">Attendant Dashboard</h2>
+            <p className="text-muted-foreground">Review and approve gatepass requests for {hostel}</p>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowProfile(!showProfile)}
+            className="flex items-center gap-2"
+          >
+            <User className="h-4 w-4" />
+            Profile
+          </Button>
         </div>
+
+        {profile && showProfile && (
+          <Card>
+            <CardHeader>
+              <CardTitle>My Profile</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              <p className="font-semibold text-lg">{profile.full_name}</p>
+              <p className="font-semibold text-lg">{profile.roll_no}</p>
+              <p className="font-semibold text-lg">{profile.hostel}</p>
+              <p className="font-semibold text-lg">{profile.parent_contact}</p>
+              <p className="font-semibold text-lg">{profile.college_email}</p>
+            </CardContent>
+          </Card>
+        )}
 
         <div className="grid gap-4 md:grid-cols-4">
           <Card className="hover-lift bg-white/95 backdrop-blur-sm border-education.teal/20 shadow-lg">

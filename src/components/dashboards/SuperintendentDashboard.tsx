@@ -4,11 +4,11 @@ import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Layout from '@/components/Layout';
 import { toast } from 'sonner';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
+import { User } from 'lucide-react';
 
 export default function SuperintendentDashboard() {
   const { user } = useAuth();
@@ -17,12 +17,15 @@ export default function SuperintendentDashboard() {
   const [todaysApprovals, setTodaysApprovals] = useState<any[]>([]);
   const [approvedPasses, setApprovedPasses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [profile, setProfile] = useState<any>(null);
+  const [showProfile, setShowProfile] = useState(false);
 
   useEffect(() => {
     fetchData();
     fetchTodaysApprovals();
     fetchApprovedPasses();
-  }, []);
+    fetchProfile();
+  }, [user]);
 
   const fetchData = async () => {
     try {
@@ -192,6 +195,25 @@ export default function SuperintendentDashboard() {
     }
   };
 
+  const fetchProfile = async () => {
+    if (!user) return;
+
+    try {
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+
+      if (profileError) throw profileError;
+
+      setProfile(profileData);
+    } catch (error) {
+      console.error('Error fetching profile:', error);
+      toast.error('Failed to load profile');
+    }
+  };
+
   const handleApprovePass = async (passId: string, notes: string = '') => {
     try {
       // Generate QR code data
@@ -289,10 +311,55 @@ export default function SuperintendentDashboard() {
   return (
     <Layout>
       <div className="space-y-6">
-        <div>
-          <h2 className="text-3xl font-bold">Superintendent Dashboard</h2>
-          <p className="text-muted-foreground">Final approval and oversight</p>
+        <div className="flex justify-between items-center">
+          <div>
+            <h2 className="text-3xl font-bold">Superintendent Dashboard</h2>
+            <p className="text-muted-foreground">Final approval and oversight</p>
+          </div>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => setShowProfile(!showProfile)}
+            className="ml-4"
+          >
+            <User className="h-4 w-4" />
+          </Button>
         </div>
+
+        {showProfile && profile && (
+          <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950 dark:to-indigo-950">
+            <CardHeader>
+              <CardTitle className="text-education-navy dark:text-white">Superintendent Profile</CardTitle>
+              <CardDescription>Your profile information</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Full Name</label>
+                  <p className="text-sm font-semibold">{profile.full_name || 'Not set'}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Email</label>
+                  <p className="text-sm font-semibold">{user?.email || 'Not set'}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Role</label>
+                  <p className="text-sm font-semibold">{profile.role || 'Superintendent'}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Hostel</label>
+                  <p className="text-sm font-semibold">{profile.hostel || 'Not assigned'}</p>
+                </div>
+                {profile.contact_number && (
+                  <div className="md:col-span-2">
+                    <label className="text-sm font-medium text-muted-foreground">Contact Number</label>
+                    <p className="text-sm font-semibold">{profile.contact_number}</p>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         <div className="grid gap-4 md:grid-cols-4">
           <Card className="hover-lift bg-white/95 backdrop-blur-sm border-education.teal/20 shadow-lg">

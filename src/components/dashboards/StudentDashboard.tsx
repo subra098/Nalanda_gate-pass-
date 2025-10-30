@@ -4,7 +4,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Plus, QrCode, Clock } from 'lucide-react';
+import { Plus, QrCode, Clock, User } from 'lucide-react';
 import Layout from '@/components/Layout';
 import ApplyPassDialog from '@/components/student/ApplyPassDialog';
 import PassCard from '@/components/student/PassCard';
@@ -14,11 +14,14 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip, BarChart, Ba
 export default function StudentDashboard() {
   const { user } = useAuth();
   const [passes, setPasses] = useState<any[]>([]);
+  const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [showApplyDialog, setShowApplyDialog] = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
 
   useEffect(() => {
     fetchPasses();
+    fetchProfile();
   }, [user]);
 
   const fetchPasses = async () => {
@@ -38,6 +41,24 @@ export default function StudentDashboard() {
       toast.error('Failed to load passes');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchProfile = async () => {
+    if (!user) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+
+      if (error) throw error;
+      setProfile(data);
+    } catch (error) {
+      console.error('Error fetching profile:', error);
+      toast.error('Failed to load profile');
     }
   };
 
@@ -80,10 +101,53 @@ export default function StudentDashboard() {
   return (
     <Layout>
       <div className="space-y-6">
+        {profile && showProfile && (
+          <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950 dark:to-indigo-950 border-education.navy/20">
+            <CardHeader>
+              <CardTitle className="text-education-navy dark:text-white">My Profile</CardTitle>
+              <CardDescription>Student information and details</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                <div>
+                  <p className="text-sm text-muted-foreground">Full Name</p>
+                  <p className="font-semibold text-lg">{profile.full_name || ''}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Roll Number</p>
+                  <p className="font-semibold text-lg">{profile.roll_no || ''}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Hostel</p>
+                  <p className="font-semibold text-lg">{profile.hostel || ''}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Parent Contact</p>
+                  <p className="font-semibold text-lg">{profile.parent_contact || ''}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">College Email</p>
+                  <p className="font-semibold text-lg">{profile.college_email || ''}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-3xl font-bold">Student Dashboard</h2>
-            <p className="text-muted-foreground">Manage your gatepass requests</p>
+          <div className="flex items-center gap-4">
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => setShowProfile(!showProfile)}
+              className="hover:bg-blue-50"
+            >
+              <User className="h-4 w-4" />
+            </Button>
+            <div>
+              <h2 className="text-3xl font-bold">Student Dashboard</h2>
+              <p className="text-muted-foreground">Manage your gatepass requests</p>
+            </div>
           </div>
           <Button onClick={() => setShowApplyDialog(true)}>
             <Plus className="h-4 w-4 mr-2" />
