@@ -48,13 +48,27 @@ export default function SecurityDashboard() {
 
         if (gatepassesError) throw gatepassesError;
 
-        // Manually join
-        const logsWithGatepasses = logsData.map(log => ({
-          ...log,
-          gatepasses: gatepassesData?.find(g => g.id === log.gatepass_id)
-        }));
+        const studentIds = gatepassesData?.map(g => g.student_id).filter(Boolean) || [];
+        const { data: profilesData, error: profilesError } = studentIds.length > 0
+          ? await supabase
+              .from('profiles')
+              .select('id, full_name, roll_no')
+              .in('id', studentIds as string[])
+          : { data: [], error: null } as const;
 
-        setLogs(logsWithGatepasses);
+        if (profilesError) throw profilesError;
+
+        const logsWithDetails = logsData.map(log => {
+          const gatepass = gatepassesData?.find(g => g.id === log.gatepass_id);
+          const profile = profilesData?.find(p => p.id === gatepass?.student_id);
+          return {
+            ...log,
+            gatepasses: gatepass,
+            profile,
+          };
+        });
+
+        setLogs(logsWithDetails);
       } else {
         setLogs([]);
       }
@@ -239,42 +253,46 @@ export default function SecurityDashboard() {
           </Card>
         )}
 
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-4 rounded-3xl border border-slate-100/70 bg-white p-5 shadow-xl sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-4">
             <Button
-              variant="outline"
+              variant="ghost"
               size="icon"
               onClick={() => setShowProfile(!showProfile)}
-              className="hover:bg-blue-50"
+              className="h-10 w-10 rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200"
             >
               <User className="h-4 w-4" />
             </Button>
-            <div>
-              <h2 className="text-3xl font-bold">Security Dashboard</h2>
-              <p className="text-muted-foreground">Scan and verify gatepasses</p>
+            <div className="space-y-1">
+              <h2 className="text-2xl font-semibold text-slate-900">Security Dashboard</h2>
+              <p className="text-sm text-slate-500">Scan and verify gatepasses</p>
             </div>
           </div>
-          <Button onClick={() => setShowScanner(true)} size="lg">
+          <Button
+            onClick={() => setShowScanner(true)}
+            size="lg"
+            className="h-11 rounded-xl bg-slate-900 px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800"
+          >
             <ScanLine className="h-5 w-5 mr-2" />
             Scan QR Code
           </Button>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-3">
-          <Card className="hover-lift bg-white/95 backdrop-blur-sm border-education.navy/20 shadow-lg">
-            <CardHeader className="pb-2">
-              <CardDescription className="text-education.navy">Total Scans Today</CardDescription>
-              <CardTitle className="text-3xl text-education.navy font-bold">
+        <div className="grid gap-3 sm:grid-cols-3">
+          <Card className="rounded-2xl border border-slate-100 bg-white shadow-sm">
+            <CardHeader className="p-4 pb-2">
+              <CardDescription className="text-xs font-medium uppercase tracking-wide text-slate-500">Total Scans Today</CardDescription>
+              <CardTitle className="text-2xl font-semibold text-slate-900">
                 {filteredLogs.filter(l =>
                   new Date(l.timestamp).toDateString() === new Date().toDateString()
                 ).length}
               </CardTitle>
             </CardHeader>
           </Card>
-          <Card className="hover-lift bg-white/95 backdrop-blur-sm border-education.burgundy/20 shadow-lg">
-            <CardHeader className="pb-2">
-              <CardDescription className="text-education.burgundy">Exits Today</CardDescription>
-              <CardTitle className="text-3xl text-education.burgundy font-bold">
+          <Card className="rounded-2xl border border-slate-100 bg-white shadow-sm">
+            <CardHeader className="p-4 pb-2">
+              <CardDescription className="text-xs font-medium uppercase tracking-wide text-slate-500">Exits Today</CardDescription>
+              <CardTitle className="text-2xl font-semibold text-slate-900">
                 {filteredLogs.filter(l =>
                   l.action === 'exit' &&
                   new Date(l.timestamp).toDateString() === new Date().toDateString()
@@ -282,10 +300,10 @@ export default function SecurityDashboard() {
               </CardTitle>
             </CardHeader>
           </Card>
-          <Card className="hover-lift bg-white/95 backdrop-blur-sm border-education.forest/20 shadow-lg">
-            <CardHeader className="pb-2">
-              <CardDescription className="text-education.forest">Entries Today</CardDescription>
-              <CardTitle className="text-3xl text-education.forest font-bold">
+          <Card className="rounded-2xl border border-slate-100 bg-white shadow-sm">
+            <CardHeader className="p-4 pb-2">
+              <CardDescription className="text-xs font-medium uppercase tracking-wide text-slate-500">Entries Today</CardDescription>
+              <CardTitle className="text-2xl font-semibold text-slate-900">
                 {filteredLogs.filter(l =>
                   l.action === 'entry' &&
                   new Date(l.timestamp).toDateString() === new Date().toDateString()
@@ -296,10 +314,10 @@ export default function SecurityDashboard() {
         </div>
 
         <div className="grid gap-6 md:grid-cols-2">
-          <Card className="bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-950 dark:to-blue-950">
-            <CardHeader>
-              <CardTitle className="text-education-navy dark:text-white">Hourly Gate Activity</CardTitle>
-              <CardDescription>Entry and exit patterns throughout the day</CardDescription>
+          <Card className="rounded-3xl border border-slate-100 bg-white shadow-sm">
+            <CardHeader className="p-5 pb-3">
+              <CardTitle className="text-lg font-semibold text-slate-900">Hourly Gate Activity</CardTitle>
+              <CardDescription className="text-sm text-slate-500">Entry and exit patterns throughout the day</CardDescription>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={250}>
@@ -334,10 +352,10 @@ export default function SecurityDashboard() {
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-br from-red-50 to-green-50 dark:from-red-950 dark:to-green-950">
-            <CardHeader>
-              <CardTitle className="text-education-navy dark:text-white">Activity Distribution</CardTitle>
-              <CardDescription>Exits vs entries comparison</CardDescription>
+          <Card className="rounded-3xl border border-slate-100 bg-white shadow-sm">
+            <CardHeader className="p-5 pb-3">
+              <CardTitle className="text-lg font-semibold text-slate-900">Activity Distribution</CardTitle>
+              <CardDescription className="text-sm text-slate-500">Exits vs entries comparison</CardDescription>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={250}>
@@ -383,46 +401,53 @@ export default function SecurityDashboard() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="all">All</TabsTrigger>
-            <TabsTrigger value="chandaka">Chandaka</TabsTrigger>
-            <TabsTrigger value="bhubaneswar">Bhubaneswar</TabsTrigger>
-            <TabsTrigger value="home_other">Home/Other</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-4 rounded-full bg-slate-100 p-1 text-sm font-medium">
+            <TabsTrigger value="all" className="rounded-full py-2 text-slate-500 transition data-[state=active]:bg-white data-[state=active]:text-slate-900">All</TabsTrigger>
+            <TabsTrigger value="chandaka" className="rounded-full py-2 text-slate-500 transition data-[state=active]:bg-white data-[state=active]:text-slate-900">Chandaka</TabsTrigger>
+            <TabsTrigger value="bhubaneswar" className="rounded-full py-2 text-slate-500 transition data-[state=active]:bg-white data-[state=active]:text-slate-900">Bhubaneswar</TabsTrigger>
+            <TabsTrigger value="home_other" className="rounded-full py-2 text-slate-500 transition data-[state=active]:bg-white data-[state=active]:text-slate-900">Home/Other</TabsTrigger>
           </TabsList>
 
           <TabsContent value={activeTab} className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Recent Activity</CardTitle>
-                <CardDescription>Entry and exit logs</CardDescription>
+            <Card className="rounded-3xl border border-slate-100 bg-white shadow-sm">
+              <CardHeader className="p-5 pb-3">
+                <CardTitle className="text-lg font-semibold text-slate-900">Recent Activity</CardTitle>
+                <CardDescription className="text-sm text-slate-500">Entry and exit logs</CardDescription>
               </CardHeader>
               <CardContent>
                 {loading ? (
-                  <div className="text-center py-8">Loading...</div>
+                  <div className="py-10 text-center text-sm text-slate-500">Loading...</div>
                 ) : filteredLogs.length === 0 ? (
-                  <div className="text-center py-8 text-muted-foreground">No activity yet</div>
+                  <div className="py-10 text-center text-sm text-slate-500">No activity yet</div>
                 ) : (
                   <div className="space-y-3">
                     {filteredLogs.map((log) => (
                       <div
                         key={log.id}
-                        className="flex items-center justify-between p-4 border rounded-lg"
+                        className="flex items-center justify-between rounded-2xl border border-slate-100 bg-slate-50/60 p-4 sm:p-5"
                       >
-                        <div className="flex items-center gap-4">
-                          <div className="p-2 bg-muted rounded">
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
+                          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-900/5 text-slate-700">
                             {getActionIcon(log.action)}
                           </div>
-                          <div>
-                            <p className="font-semibold">Pass ID: {log.gatepass_id?.substring(0, 8)}</p>
-                            <p className="text-sm text-muted-foreground">
+                          <div className="space-y-1">
+                            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Pass ID</p>
+                            <p className="text-base font-semibold text-slate-900 break-all">{log.gatepass_id}</p>
+                            <div className="flex flex-col gap-1 text-sm text-slate-500 sm:flex-row sm:items-center sm:gap-3">
+                              <span className="font-medium text-slate-900">{log.profile?.full_name || 'Unknown student'}</span>
+                              <span className="inline-flex items-center gap-1 rounded-full bg-slate-200 px-3 py-1 text-xs font-medium uppercase tracking-wide text-slate-600">
+                                Reg. No: {log.profile?.roll_no || 'N/A'}
+                              </span>
+                            </div>
+                            <p className="text-xs text-slate-400">
                               {log.action === 'exit' ? 'Student exited' : 'Student returned'}
                             </p>
                           </div>
                         </div>
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-end gap-3 sm:items-center">
                           <div className="text-right">
                             {getActionBadge(log.action)}
-                            <p className="text-sm text-muted-foreground mt-1">
+                            <p className="mt-2 text-xs text-slate-400">
                               {new Date(log.timestamp).toLocaleString()}
                             </p>
                           </div>
@@ -430,7 +455,7 @@ export default function SecurityDashboard() {
                             variant="ghost"
                             size="icon"
                             onClick={() => handleDeleteLog(log.id)}
-                            className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                            className="rounded-xl bg-slate-100 text-slate-500 transition hover:bg-slate-200 hover:text-slate-700"
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
@@ -453,11 +478,14 @@ export default function SecurityDashboard() {
       )}
 
       {showPassDetails && scannedPass && (
-        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <Card className="w-full max-w-2xl">
-            <CardHeader>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 px-4 py-8 backdrop-blur-sm">
+          <Card className="w-full max-w-2xl rounded-3xl border border-slate-100 bg-white shadow-2xl">
+            <CardHeader className="p-6 pb-4">
               <div className="flex items-center justify-between">
-                <CardTitle>Pass Details</CardTitle>
+                <div>
+                  <CardTitle className="text-xl font-semibold text-slate-900">Pass Details</CardTitle>
+                  <p className="mt-1 text-sm text-slate-500">{scannedPass.id}</p>
+                </div>
                 <Button 
                   variant="ghost" 
                   size="icon"
@@ -474,47 +502,47 @@ export default function SecurityDashboard() {
                 </Badge>
               </div>
             </CardHeader>
-            <CardContent className="space-y-6">
+            <CardContent className="space-y-6 p-6">
               <div>
-                <h3 className="text-lg font-semibold mb-4 text-primary">Student Details</h3>
-                <div className="grid gap-4 md:grid-cols-2 p-4 bg-muted/50 rounded-lg">
+                <h3 className="mb-4 text-lg font-semibold text-slate-900">Student Details</h3>
+                <div className="grid gap-4 rounded-2xl bg-slate-50 p-4 md:grid-cols-2">
                   <div>
-                    <p className="text-sm text-muted-foreground">Student Name</p>
-                    <p className="font-semibold text-lg">{scannedPass.profile?.full_name || ''}</p>
+                    <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Student Name</p>
+                    <p className="text-base font-semibold text-slate-900">{scannedPass.profile?.full_name || ''}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Roll Number</p>
-                    <p className="font-semibold text-lg">{scannedPass.profile?.roll_no || ''}</p>
+                    <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Registration Number</p>
+                    <p className="text-base font-semibold text-slate-900">{scannedPass.profile?.roll_no || ''}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Hostel</p>
-                    <p className="font-semibold text-lg">{scannedPass.profile?.hostel || ''}</p>
+                    <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Hostel</p>
+                    <p className="text-base font-semibold text-slate-900">{scannedPass.profile?.hostel || ''}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Contact Number</p>
-                    <p className="font-semibold text-lg">{scannedPass.profile?.parent_contact || ''}</p>
+                    <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Contact Number</p>
+                    <p className="text-base font-semibold text-slate-900">{scannedPass.profile?.parent_contact || ''}</p>
                   </div>
                 </div>
               </div>
               
               <div>
-                <h3 className="text-lg font-semibold mb-4 text-primary">Pass Information</h3>
+                <h3 className="mb-4 text-lg font-semibold text-slate-900">Pass Information</h3>
                 <div className="space-y-3">
                   <div>
-                    <p className="text-sm text-muted-foreground">Destination Type</p>
-                    <p className="font-semibold capitalize">{scannedPass.destination_type.replace('_', ' ')}</p>
+                    <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Destination Type</p>
+                    <p className="text-base font-semibold capitalize text-slate-900">{scannedPass.destination_type.replace('_', ' ')}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Destination Details</p>
-                    <p className="font-semibold">{scannedPass.destination_details}</p>
+                    <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Destination Details</p>
+                    <p className="text-base font-semibold text-slate-900">{scannedPass.destination_details}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Reason</p>
-                    <p className="font-semibold">{scannedPass.reason}</p>
+                    <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Reason</p>
+                    <p className="text-base font-semibold text-slate-900">{scannedPass.reason}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Expected Return</p>
-                    <p className="font-semibold">
+                    <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Expected Return</p>
+                    <p className="text-base font-semibold text-slate-900">
                       {new Date(scannedPass.expected_return_at).toLocaleString()}
                     </p>
                   </div>
@@ -523,7 +551,7 @@ export default function SecurityDashboard() {
 
               <Button 
                 onClick={() => setShowPassDetails(false)} 
-                className="w-full"
+                className="w-full rounded-xl bg-slate-900 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800"
               >
                 Close
               </Button>

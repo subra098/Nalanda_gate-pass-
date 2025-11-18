@@ -102,91 +102,94 @@ export default function StudentDashboard() {
     <Layout>
       <div className="space-y-6">
         {profile && showProfile && (
-          <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950 dark:to-indigo-950 border-education.navy/20">
+          <Card className="rounded-3xl border border-slate-100/70 bg-white shadow-xl">
             <CardHeader>
-              <CardTitle className="text-education-navy dark:text-white">My Profile</CardTitle>
-              <CardDescription>Student information and details</CardDescription>
+              <CardTitle className="text-slate-900">My Profile</CardTitle>
+              <CardDescription className="text-slate-500">Student information and details</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 <div>
-                  <p className="text-sm text-muted-foreground">Full Name</p>
-                  <p className="font-semibold text-lg">{profile.full_name || ''}</p>
+                  <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Full Name</p>
+                  <p className="text-base font-semibold text-slate-900">{profile.full_name || ''}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Roll Number</p>
-                  <p className="font-semibold text-lg">{profile.roll_no || ''}</p>
+                  <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Roll Number</p>
+                  <p className="text-base font-semibold text-slate-900">{profile.roll_no || ''}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Hostel</p>
-                  <p className="font-semibold text-lg">{profile.hostel || ''}</p>
+                  <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Hostel</p>
+                  <p className="text-base font-semibold text-slate-900">{profile.hostel || ''}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Parent Contact</p>
-                  <p className="font-semibold text-lg">{profile.parent_contact || ''}</p>
+                  <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Parent Contact</p>
+                  <p className="text-base font-semibold text-slate-900">{profile.parent_contact || ''}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">College Email</p>
-                  <p className="font-semibold text-lg">{profile.college_email || ''}</p>
+                  <p className="text-xs font-medium uppercase tracking-wide text-slate-500">College Email</p>
+                  <p className="text-base font-semibold text-slate-900">{profile.college_email || ''}</p>
                 </div>
               </div>
             </CardContent>
           </Card>
         )}
 
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-4 rounded-3xl border border-slate-100/70 bg-white p-5 shadow-xl sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-4">
             <Button
-              variant="outline"
+              variant="ghost"
               size="icon"
               onClick={() => setShowProfile(!showProfile)}
-              className="hover:bg-blue-50"
+              className="h-10 w-10 rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200"
             >
               <User className="h-4 w-4" />
             </Button>
-            <div>
-              <h2 className="text-3xl font-bold">Student Dashboard</h2>
-              <p className="text-muted-foreground">Manage your gatepass requests</p>
+            <div className="space-y-1">
+              <h2 className="text-2xl font-semibold text-slate-900">Student Dashboard</h2>
+              <p className="text-sm text-slate-500">Manage your gatepass requests</p>
             </div>
           </div>
-          <Button onClick={() => setShowApplyDialog(true)}>
+          <Button
+            onClick={() => setShowApplyDialog(true)}
+            className="h-11 rounded-xl bg-slate-900 px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800"
+          >
             <Plus className="h-4 w-4 mr-2" />
             Apply for Pass
           </Button>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-4">
-          <Card className="hover-lift bg-white/95 backdrop-blur-sm border-education.navy/20 shadow-lg">
-            <CardHeader className="pb-2">
-              <CardDescription className="text-education.navy">Total Passes</CardDescription>
-              <CardTitle className="text-3xl text-education.navy font-bold">{stats.total}</CardTitle>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <Card className="rounded-2xl border border-slate-100 bg-white shadow-sm">
+            <CardHeader className="p-4 pb-2">
+              <CardDescription className="text-xs font-medium uppercase tracking-wide text-slate-500">Total Passes</CardDescription>
+              <CardTitle className="text-2xl font-semibold text-slate-900">{stats.total}</CardTitle>
             </CardHeader>
           </Card>
-          <Card className="hover-lift bg-white/95 backdrop-blur-sm border-education.teal/20 shadow-lg">
-            <CardHeader className="pb-2">
-              <CardDescription className="text-education.teal">Pending</CardDescription>
-              <CardTitle className="text-3xl text-education.teal font-bold">{stats.pending}</CardTitle>
+          <Card className="rounded-2xl border border-slate-100 bg-white shadow-sm">
+            <CardHeader className="p-4 pb-2">
+              <CardDescription className="text-xs font-medium uppercase tracking-wide text-slate-500">Pending</CardDescription>
+              <CardTitle className="text-2xl font-semibold text-slate-900">{stats.pending}</CardTitle>
             </CardHeader>
           </Card>
-          <Card className="hover-lift bg-white/95 backdrop-blur-sm border-education.forest/20 shadow-lg">
-            <CardHeader className="pb-2">
-              <CardDescription className="text-education.forest">Approved</CardDescription>
-              <CardTitle className="text-3xl text-education.forest font-bold">{stats.approved}</CardTitle>
+          <Card className="rounded-2xl border border-slate-100 bg-white shadow-sm">
+            <CardHeader className="p-4 pb-2">
+              <CardDescription className="text-xs font-medium uppercase tracking-wide text-slate-500">Approved</CardDescription>
+              <CardTitle className="text-2xl font-semibold text-slate-900">{stats.approved}</CardTitle>
             </CardHeader>
           </Card>
-          <Card className="hover-lift bg-white/95 backdrop-blur-sm border-education.gold/20 shadow-lg">
-            <CardHeader className="pb-2">
-              <CardDescription className="text-education.gold">Currently Out</CardDescription>
-              <CardTitle className="text-3xl text-education.gold font-bold">{stats.active}</CardTitle>
+          <Card className="rounded-2xl border border-slate-100 bg-white shadow-sm">
+            <CardHeader className="p-4 pb-2">
+              <CardDescription className="text-xs font-medium uppercase tracking-wide text-slate-500">Currently Out</CardDescription>
+              <CardTitle className="text-2xl font-semibold text-slate-900">{stats.active}</CardTitle>
             </CardHeader>
           </Card>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2">
-          <Card className="bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-950 dark:to-purple-950">
-            <CardHeader>
-              <CardTitle className="text-education-navy dark:text-white">Pass Status Distribution</CardTitle>
-              <CardDescription>Overview of your pass statuses</CardDescription>
+        <div className="grid gap-4 lg:grid-cols-2">
+          <Card className="rounded-3xl border border-slate-100 bg-white shadow-sm">
+            <CardHeader className="p-5 pb-3">
+              <CardTitle className="text-lg font-semibold text-slate-900">Pass Status Distribution</CardTitle>
+              <CardDescription className="text-sm text-slate-500">Overview of your pass statuses</CardDescription>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={250}>
@@ -231,10 +234,10 @@ export default function StudentDashboard() {
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-br from-indigo-50 to-cyan-50 dark:from-indigo-950 dark:to-cyan-950">
-            <CardHeader>
-              <CardTitle className="text-education-navy dark:text-white">Monthly Pass Requests</CardTitle>
-              <CardDescription>Number of passes by month</CardDescription>
+          <Card className="rounded-3xl border border-slate-100 bg-white shadow-sm">
+            <CardHeader className="p-5 pb-3">
+              <CardTitle className="text-lg font-semibold text-slate-900">Monthly Pass Requests</CardTitle>
+              <CardDescription className="text-sm text-slate-500">Number of passes by month</CardDescription>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={250}>
@@ -266,16 +269,16 @@ export default function StudentDashboard() {
           </Card>
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>My Passes</CardTitle>
-            <CardDescription>View and manage your gatepass history</CardDescription>
+        <Card className="rounded-3xl border border-slate-100 bg-white shadow-sm">
+          <CardHeader className="p-5 pb-3">
+            <CardTitle className="text-lg font-semibold text-slate-900">My Passes</CardTitle>
+            <CardDescription className="text-sm text-slate-500">View and manage your gatepass history</CardDescription>
           </CardHeader>
           <CardContent>
             {loading ? (
-              <div className="text-center py-8">Loading passes...</div>
+              <div className="py-10 text-center text-sm text-slate-500">Loading passes...</div>
             ) : passes.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
+              <div className="py-10 text-center text-sm text-slate-500">
                 No passes yet. Apply for your first pass!
               </div>
             ) : (

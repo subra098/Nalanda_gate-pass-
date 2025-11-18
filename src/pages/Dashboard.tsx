@@ -10,8 +10,11 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-lg">Loading...</div>
+      <div className="flex min-h-screen items-center justify-center bg-slate-950 px-4">
+        <div className="w-full max-w-[220px] rounded-3xl bg-white p-6 text-center shadow-lg">
+          <div className="mb-3 h-2 w-2/3 animate-pulse rounded-full bg-slate-200 mx-auto" />
+          <p className="text-sm font-medium text-slate-600">Preparing your dashboard…</p>
+        </div>
       </div>
     );
   }
@@ -22,8 +25,11 @@ export default function Dashboard() {
 
   if (!role) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-lg">Loading your dashboard...</div>
+      <div className="flex min-h-screen items-center justify-center bg-slate-950 px-4">
+        <div className="w-full max-w-[220px] rounded-3xl bg-white p-6 text-center shadow-lg">
+          <div className="mb-3 h-2 w-2/3 animate-pulse rounded-full bg-slate-200 mx-auto" />
+          <p className="text-sm font-medium text-slate-600">Syncing your access…</p>
+        </div>
       </div>
     );
   }
