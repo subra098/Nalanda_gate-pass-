@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { supabase } from '@/integrations/supabase/client';
+import api from '@/lib/api';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -31,18 +31,12 @@ export default function ApplyPassDialog({ open, onOpenChange, onSuccess }: Apply
 
     setLoading(true);
     try {
-      const { error } = await supabase
-        .from('gatepasses')
-        .insert({
-          student_id: user.id,
-          destination_type: formData.destinationType,
-          destination_details: formData.destinationDetails,
-          reason: formData.reason,
-          expected_return_at: formData.expectedReturnAt,
-          status: 'pending'
-        });
-
-      if (error) throw error;
+      await api.post('/gatepass/request', {
+        destinationType: formData.destinationType,
+        destinationDetails: formData.destinationDetails,
+        reason: formData.reason,
+        expectedReturnAt: formData.expectedReturnAt,
+      });
 
       toast.success('Pass application submitted successfully');
       onSuccess();
@@ -70,9 +64,9 @@ export default function ApplyPassDialog({ open, onOpenChange, onSuccess }: Apply
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="destination-type">Destination Type</Label>
-            <Select 
-              value={formData.destinationType} 
-              onValueChange={(v: any) => setFormData({...formData, destinationType: v})}
+            <Select
+              value={formData.destinationType}
+              onValueChange={(v: any) => setFormData({ ...formData, destinationType: v })}
             >
               <SelectTrigger>
                 <SelectValue />
@@ -90,7 +84,7 @@ export default function ApplyPassDialog({ open, onOpenChange, onSuccess }: Apply
             <Input
               id="destination-details"
               value={formData.destinationDetails}
-              onChange={(e) => setFormData({...formData, destinationDetails: e.target.value})}
+              onChange={(e) => setFormData({ ...formData, destinationDetails: e.target.value })}
               placeholder="Specific location or address"
               required
             />
@@ -101,7 +95,7 @@ export default function ApplyPassDialog({ open, onOpenChange, onSuccess }: Apply
             <Textarea
               id="reason"
               value={formData.reason}
-              onChange={(e) => setFormData({...formData, reason: e.target.value})}
+              onChange={(e) => setFormData({ ...formData, reason: e.target.value })}
               placeholder="Reason for outing"
               required
             />
@@ -113,7 +107,7 @@ export default function ApplyPassDialog({ open, onOpenChange, onSuccess }: Apply
               id="return-time"
               type="datetime-local"
               value={formData.expectedReturnAt}
-              onChange={(e) => setFormData({...formData, expectedReturnAt: e.target.value})}
+              onChange={(e) => setFormData({ ...formData, expectedReturnAt: e.target.value })}
               required
             />
           </div>

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import api from '@/lib/api';
 import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Layout from '@/components/Layout';
 import { toast } from 'sonner';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
-import { User } from 'lucide-react';
+import { LayoutDashboard, Users, FileText, CheckCircle, Clock, XCircle, User } from 'lucide-react';
 
 export default function SuperintendentDashboard() {
   const { user } = useAuth();
@@ -24,81 +24,26 @@ export default function SuperintendentDashboard() {
     fetchData();
     fetchTodaysApprovals();
     fetchApprovedPasses();
-    fetchProfile();
+    if (user) setProfile(user);
   }, [user]);
 
   const fetchData = async () => {
     try {
-      // Fetch passes awaiting approval
-      const { data: passData, error: passError } = await supabase
-        .from('gatepasses')
-        .select('*')
-        .eq('status', 'attendant_approved')
-        .order('created_at', { ascending: false });
+      // Fetch passes awaiting approval (Attendant Approved)
+      const { data: passData } = await api.get('/gatepass/list?status=ATTENDANT_APPROVED');
 
-      if (passError) throw passError;
+      const formattedPasses = passData.map((pass: any) => ({
+        ...pass,
+        profiles: pass.student
+      }));
 
-      // Fetch profiles for these passes
-      if (passData && passData.length > 0) {
-        const studentIds = passData.map(p => p.student_id);
-        const { data: profilesData, error: profilesError } = await supabase
-          .from('profiles')
-          .select('id, full_name, roll_no, hostel, parent_contact')
-          .in('id', studentIds);
+      setPasses(formattedPasses || []);
 
-        if (profilesError) throw profilesError;
+      // Fetch extension requests - API not yet implemented for extensions, mock or skip for now
+      // Assuming we need to add an endpoint for extensions later. 
+      // For this migration, we will focus on core flow first.
+      setExtensions([]);
 
-        // Manually join
-        const passesWithProfiles = passData.map(pass => ({
-          ...pass,
-          profiles: profilesData?.find(p => p.id === pass.student_id)
-        }));
-
-        setPasses(passesWithProfiles);
-      } else {
-        setPasses([]);
-      }
-
-      // Fetch extension requests
-      const { data: extData, error: extError } = await supabase
-        .from('extension_requests')
-        .select('*')
-        .eq('status', 'pending')
-        .order('created_at', { ascending: false });
-
-      if (extError) throw extError;
-
-      // Fetch associated gatepasses and profiles for extensions
-      if (extData && extData.length > 0) {
-        const gatepassIds = extData.map(e => e.gatepass_id);
-        const { data: gatepassData, error: gatepassError } = await supabase
-          .from('gatepasses')
-          .select('*')
-          .in('id', gatepassIds);
-
-        if (gatepassError) throw gatepassError;
-
-        const extStudentIds = gatepassData?.map(g => g.student_id) || [];
-        const { data: extProfilesData, error: extProfilesError } = await supabase
-          .from('profiles')
-          .select('id, full_name, roll_no')
-          .in('id', extStudentIds);
-
-        if (extProfilesError) throw extProfilesError;
-
-        // Manually join extensions with gatepasses and profiles
-        const extensionsWithData = extData.map(ext => ({
-          ...ext,
-          gatepasses: {
-            ...gatepassData?.find(g => g.id === ext.gatepass_id),
-            profiles: extProfilesData?.find(p => p.id === gatepassData?.find(g => g.id === ext.gatepass_id)?.student_id)
-          }
-        }));
-
-        setExtensions(extensionsWithData);
-      } else {
-        setExtensions([]);
-      }
     } catch (error) {
       console.error('Error:', error);
       toast.error('Failed to load data');
@@ -109,42 +54,21 @@ export default function SuperintendentDashboard() {
 
   const fetchTodaysApprovals = async () => {
     if (!user) return;
-
     try {
+      const { data } = await api.get('/gatepass/list?status=SUPERINTENDENT_APPROVED');
+
       const startOfDay = new Date();
       startOfDay.setHours(0, 0, 0, 0);
 
-      // Fetch today's approved passes by this superintendent
-      const { data: approvalsData, error: approvalsError } = await supabase
-        .from('gatepasses')
-        .select('*')
-        .eq('superintendent_id', user.id)
-        .eq('status', 'superintendent_approved')
-        .gte('created_at', startOfDay.toISOString())
-        .order('created_at', { ascending: false });
+      const todays = data.filter((p: any) =>
+        p.superintendentId === user.id &&
+        new Date(p.updatedAt) >= startOfDay
+      ).map((pass: any) => ({
+        ...pass,
+        profiles: pass.student
+      }));
 
-      if (approvalsError) throw approvalsError;
-
-      // Get student profiles for these passes
-      if (approvalsData && approvalsData.length > 0) {
-        const studentIds = approvalsData.map(p => p.student_id);
-        const { data: profilesData, error: profilesError } = await supabase
-          .from('profiles')
-          .select('id, full_name, roll_no, parent_contact, hostel')
-          .in('id', studentIds);
-
-        if (profilesError) throw profilesError;
-
-        // Manually join profiles with passes
-        const approvalsWithProfiles = approvalsData.map(pass => ({
-          ...pass,
-          profiles: profilesData?.find(p => p.id === pass.student_id)
-        }));
-
-        setTodaysApprovals(approvalsWithProfiles);
-      } else {
-        setTodaysApprovals([]);
-      }
+      setTodaysApprovals(todays);
     } catch (error) {
       console.error('Error fetching today\'s approvals:', error);
       toast.error('Failed to load today\'s approvals');
@@ -153,86 +77,34 @@ export default function SuperintendentDashboard() {
 
   const fetchApprovedPasses = async () => {
     if (!user) return;
-
     try {
-      // Fetch all approved passes by this superintendent (last 7 days for trends)
+      const { data } = await api.get('/gatepass/list?status=SUPERINTENDENT_APPROVED');
+      // Filter for last 7 days locally for now
       const sevenDaysAgo = new Date();
       sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
-      const { data: approvedData, error: approvedError } = await supabase
-        .from('gatepasses')
-        .select('*')
-        .eq('superintendent_id', user.id)
-        .eq('status', 'superintendent_approved')
-        .gte('created_at', sevenDaysAgo.toISOString())
-        .order('created_at', { ascending: false });
+      const recent = data.filter((p: any) =>
+        p.superintendentId === user.id &&
+        new Date(p.createdAt) >= sevenDaysAgo
+      ).map((pass: any) => ({
+        ...pass,
+        profiles: pass.student
+      }));
 
-      if (approvedError) throw approvedError;
+      setApprovedPasses(recent);
 
-      // Get student profiles for these passes
-      if (approvedData && approvedData.length > 0) {
-        const studentIds = approvedData.map(p => p.student_id);
-        const { data: profilesData, error: profilesError } = await supabase
-          .from('profiles')
-          .select('id, full_name, roll_no, hostel')
-          .in('id', studentIds);
-
-        if (profilesError) throw profilesError;
-
-        // Manually join profiles with passes
-        const approvedWithProfiles = approvedData.map(pass => ({
-          ...pass,
-          profiles: profilesData?.find(p => p.id === pass.student_id)
-        }));
-
-        setApprovedPasses(approvedWithProfiles);
-      } else {
-        setApprovedPasses([]);
-      }
     } catch (error) {
       console.error('Error fetching approved passes:', error);
       toast.error('Failed to load approved passes');
     }
   };
 
-  const fetchProfile = async () => {
-    if (!user) return;
-
-    try {
-      const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single();
-
-      if (profileError) throw profileError;
-
-      setProfile(profileData);
-    } catch (error) {
-      console.error('Error fetching profile:', error);
-      toast.error('Failed to load profile');
-    }
-  };
-
   const handleApprovePass = async (passId: string, notes: string = '') => {
     try {
-      // Generate QR code data
-      const qrData = JSON.stringify({
-        passId,
-        timestamp: Date.now()
+      await api.put(`/gatepass/${passId}/status`, {
+        status: 'APPROVED',
+        notes
       });
-
-      const { error } = await supabase
-        .from('gatepasses')
-        .update({
-          status: 'superintendent_approved',
-          superintendent_id: user?.id,
-          superintendent_notes: notes,
-          qr_code_data: qrData
-        })
-        .eq('id', passId);
-
-      if (error) throw error;
 
       toast.success('Pass approved! QR code generated.');
       fetchData();
@@ -246,16 +118,10 @@ export default function SuperintendentDashboard() {
 
   const handleRejectPass = async (passId: string, notes: string = '') => {
     try {
-      const { error } = await supabase
-        .from('gatepasses')
-        .update({
-          status: 'rejected',
-          superintendent_id: user?.id,
-          superintendent_notes: notes
-        })
-        .eq('id', passId);
-
-      if (error) throw error;
+      await api.put(`/gatepass/${passId}/status`, {
+        status: 'REJECTED',
+        notes
+      });
 
       toast.success('Pass rejected');
       fetchData();
@@ -266,34 +132,15 @@ export default function SuperintendentDashboard() {
   };
 
   const handleApproveExtension = async (extId: string, gatepassId: string, newReturnAt: string) => {
-    try {
-      const { error: extError } = await supabase
-        .from('extension_requests')
-        .update({ status: 'approved' })
-        .eq('id', extId);
-
-      if (extError) throw extError;
-
-      const { error: passError } = await supabase
-        .from('gatepasses')
-        .update({ expected_return_at: newReturnAt })
-        .eq('id', gatepassId);
-
-      if (passError) throw passError;
-
-      toast.success('Extension approved');
-      fetchData();
-    } catch (error) {
-      console.error('Error:', error);
-      toast.error('Failed to approve extension');
-    }
+    // API Implementation pending for extensions
+    toast.error("Extension approval not yet migrated");
   };
 
   // Chart data - weekly approval trends
   const approvalData = approvedPasses.slice(0, 7).map((pass, index) => ({
-    day: new Date(pass.created_at).toLocaleDateString('en-US', { weekday: 'short' }),
+    day: new Date(pass.createdAt).toLocaleDateString('en-US', { weekday: 'short' }),
     passes: approvedPasses.filter(p =>
-      new Date(p.created_at).toDateString() === new Date(pass.created_at).toDateString()
+      new Date(p.createdAt).toDateString() === new Date(pass.createdAt).toDateString()
     ).length
   }));
 
@@ -399,26 +246,26 @@ export default function SuperintendentDashboard() {
                 <AreaChart data={approvalData}>
                   <defs>
                     <linearGradient id="areaGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#0EA5E9" stopOpacity={0.8}/>
-                      <stop offset="95%" stopColor="#06B6D4" stopOpacity={0.2}/>
+                      <stop offset="5%" stopColor="#0EA5E9" stopOpacity={0.8} />
+                      <stop offset="95%" stopColor="#06B6D4" stopOpacity={0.2} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
                   <XAxis dataKey="day" stroke="#374151" />
                   <YAxis stroke="#374151" />
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: 'rgba(255,255,255,0.95)', 
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: 'rgba(255,255,255,0.95)',
                       border: '2px solid #e0e0e0',
                       borderRadius: '8px'
                     }}
                   />
-                  <Area 
-                    type="monotone" 
-                    dataKey="passes" 
-                    stroke="#0EA5E9" 
+                  <Area
+                    type="monotone"
+                    dataKey="passes"
+                    stroke="#0EA5E9"
                     strokeWidth={3}
-                    fill="url(#areaGradient)" 
+                    fill="url(#areaGradient)"
                   />
                 </AreaChart>
               </ResponsiveContainer>
@@ -435,23 +282,23 @@ export default function SuperintendentDashboard() {
                 <BarChart data={hostelData}>
                   <defs>
                     <linearGradient id="hostelGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#059669" stopOpacity={0.9}/>
-                      <stop offset="95%" stopColor="#10B981" stopOpacity={0.8}/>
+                      <stop offset="5%" stopColor="#059669" stopOpacity={0.9} />
+                      <stop offset="95%" stopColor="#10B981" stopOpacity={0.8} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
                   <XAxis dataKey="name" stroke="#374151" />
                   <YAxis stroke="#374151" />
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: 'rgba(255,255,255,0.95)', 
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: 'rgba(255,255,255,0.95)',
                       border: '2px solid #e0e0e0',
                       borderRadius: '8px'
                     }}
                   />
-                  <Bar 
-                    dataKey="value" 
-                    fill="url(#hostelGradient)" 
+                  <Bar
+                    dataKey="value"
+                    fill="url(#hostelGradient)"
                     radius={[8, 8, 0, 0]}
                   />
                 </BarChart>
@@ -487,7 +334,9 @@ export default function SuperintendentDashboard() {
                                 {pass.profiles?.roll_no} • {pass.profiles?.hostel}
                               </p>
                             </div>
-                            <Badge>Pending</Badge>
+                            <Badge variant="secondary">
+                              {pass.status === 'attendant_approved' ? 'Attendant Approved' : 'Pending'}
+                            </Badge>
                           </div>
                           <div className="space-y-2 text-sm">
                             <p><strong>Destination:</strong> {pass.destination_type} - {pass.destination_details}</p>
@@ -498,10 +347,20 @@ export default function SuperintendentDashboard() {
                             )}
                           </div>
                           <div className="flex gap-2">
-                            <Button size="sm" onClick={() => handleApprovePass(pass.id)}>
+                            <Button
+                              size="sm"
+                              onClick={() => handleApprovePass(pass.id)}
+                              className="bg-green-600 hover:bg-green-700"
+                            >
+                              <CheckCircle className="h-4 w-4 mr-1" />
                               Approve & Generate QR
                             </Button>
-                            <Button size="sm" variant="destructive" onClick={() => handleRejectPass(pass.id)}>
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              onClick={() => handleRejectPass(pass.id)}
+                            >
+                              <XCircle className="h-4 w-4 mr-1" />
                               Reject
                             </Button>
                           </div>
@@ -539,8 +398,8 @@ export default function SuperintendentDashboard() {
                             <p><strong>New Return Time:</strong> {new Date(ext.new_expected_return_at).toLocaleString()}</p>
                           </div>
                           <div className="flex gap-2">
-                            <Button 
-                              size="sm" 
+                            <Button
+                              size="sm"
                               onClick={() => handleApproveExtension(ext.id, ext.gatepass_id, ext.new_expected_return_at)}
                             >
                               Approve Extension

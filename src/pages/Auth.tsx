@@ -38,10 +38,9 @@ export default function Auth() {
         await signIn(email, password);
       } else {
         const additionalData = role === 'student' ? {
-          roll_no: rollNo,
+          rollNo: rollNo,
           hostel,
-          parent_contact: parentContact,
-          college_email: email
+          parentContact: parentContact,
         } : role === 'hostel_attendant' ? {
           hostel
         } : {};

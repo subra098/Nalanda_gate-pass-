@@ -1,153 +1,111 @@
 # Pass Flow – Digital Gatepass System
 
-Pass Flow is a role-based web application for managing hostel gatepass workflows. Students can request gatepasses, hostel attendants and superintendents can review and approve them, and security guards can validate QR codes at the gate. The project delivers a modern, mobile-friendly experience that mirrors a native application.
+Pass Flow is a modern, role-based web application designed to streamline hostel gatepass workflows. It enables students to request gatepasses, hostel attendants and superintendents to review and approve them, and security guards to validate QR codes at the gate. The application delivers a mobile-friendly experience that feels like a native app, ensuring efficient and secure gatepass management.
 
 ## Features
 
-- **Student Dashboard**
-  - Submit new gatepass requests with destination, reason, and expected return time.
-  - Track request status, view generated QR codes, and request extensions when overdue.
-  - Visualise personal pass history with distribution and monthly charts.
+### Student Dashboard
+- **Request Gatepasses**: Submit new requests with destination, reason, and expected return time.
+- **Track Status**: Monitor request status, view generated QR codes, and request extensions for overdue passes.
+- **Pass History**: Visualize personal pass history with distribution and monthly charts.
 
-- **Hostel Attendant Dashboard**
-  - Review pending passes for the assigned hostel.
-  - Approve or reject requests, including automated approval for predefined destinations.
-  - Monitor daily approvals and destination trends.
+### Hostel Attendant Dashboard
+- **Review Requests**: Examine pending passes for the assigned hostel.
+- **Approve/Reject**: Approve or reject requests, with automated approval for predefined destinations.
+- **Analytics**: Monitor daily approvals and destination trends.
 
-- **Superintendent Dashboard**
-  - Final approval stage with QR code generation.
-  - Manage time extension requests and analyse weekly approval trends.
+### Superintendent Dashboard
+- **Final Approval**: Provide final approval and generate QR codes.
+- **Extension Management**: Handle time extension requests.
+- **Trends Analysis**: Analyze weekly approval trends.
 
-- **Security Dashboard**
-  - Scan QR codes to register entries and exits in real time.
-  - View recent activity with student name, registration number, and pass details.
-  - Analyse hourly gate activity and entry/exit distribution.
+### Security Dashboard
+- **QR Scanning**: Scan QR codes to log entries and exits in real time.
+- **Activity Monitoring**: View recent activity with student details.
+- **Analytics**: Analyze hourly gate activity and entry/exit distributions.
 
 ## Tech Stack
 
-- **Frontend:** React 18, TypeScript, Vite
-- **UI:** Tailwind CSS, ShadCN UI components, lucide-react icons, Framer Motion
-- **State & Data:** TanStack Query, Supabase (authentication, database, storage)
-- **Charts:** Recharts
-- **Utilities:** date-fns, class-variance-authority, tailwind-merge
+- **Frontend**: React 18, TypeScript, Vite
+- **UI Framework**: Tailwind CSS, ShadCN UI components, Lucide React icons, Framer Motion
+- **State Management & Data**: TanStack Query, Supabase (authentication, database, storage)
+- **Charts**: Recharts
+- **Utilities**: date-fns, class-variance-authority, tailwind-merge
 
 ## Getting Started
 
 ### Prerequisites
-
 - Node.js ≥ 18
-- npm (alternatively, use any Node package manager compatible with the included `package-lock.json`)
+- npm (or any compatible package manager like yarn or pnpm)
 
 ### Installation
+1. Clone the repository:
+   ```bash
+   git clone <repository-url>
+   cd nit-gate-pass
+   ```
 
-```bash
-git clone <repository-url>
-cd pass-flow
-npm install
-```
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
 
 ### Environment Variables
-
-Create a `.env` file in the project root (or configure environment variables via your hosting provider) with the following values:
-
-```bash
+Create a `.env` file in the project root with the following variables:
+```
 VITE_SUPABASE_URL=<your-supabase-project-url>
 VITE_SUPABASE_PUBLISHABLE_KEY=<your-supabase-anon-or-public-key>
 ```
-
-These values are used by the Supabase client located at `src/integrations/supabase/client.ts` and must correspond to your Supabase project.
+These are required for Supabase integration.
 
 ### Available Scripts
+- `npm run dev`: Start the development server
+- `npm run build`: Build for production
+- `npm run build:dev`: Build in development mode
+- `npm run preview`: Preview the production build
+- `npm run lint`: Run ESLint
 
-```bash
-npm run dev       # Start the Vite development server
-npm run build     # Produce a production build
-npm run build:dev # Build using the development mode configuration
-npm run preview   # Preview the production build locally
-npm run lint      # Run ESLint over the codebase
-```
-
-### Project Structure
-
+## Project Structure
 ```
 src/
-├─ components/        # Shared UI pieces and role-specific dashboards
-├─ hooks/             # Custom hooks (authentication, etc.)
-├─ integrations/      # Supabase client and generated types
-├─ pages/             # Route-level components (Index, Auth, Dashboard, 404)
-└─ components/ui/     # ShadCN UI primitives
+├── components/          # Shared UI components and role-specific dashboards
+├── hooks/               # Custom hooks (authentication, mobile detection, etc.)
+├── integrations/        # Supabase client and types
+├── pages/               # Route-level components (Auth, Dashboard, etc.)
+├── lib/                 # Utility functions
+└── components/ui/       # ShadCN UI primitives
+supabase/
+├── config.toml          # Supabase configuration
+└── migrations/          # Database migrations
 ```
-
-Supabase database types are generated into `src/integrations/supabase/types.ts` and consumed by the typed client in `client.ts`.
 
 ## Development Guidelines
 
-- **Styling:** Follows Tailwind CSS utility classes with design tokens defined in `tailwind.config.ts`. When adding components, match the existing neutral palette and rounded card aesthetic.
-- **Data Fetching:** Uses TanStack Query for caching and Supabase for persistence. Prefer existing hooks or create new query keys when expanding data access.
-- **Authentication:** Managed by `useAuth`, which wraps Supabase auth events. Ensure new pages consider loading and role checks provided by this hook.
-- **Charts & Analytics:** Recharts is used throughout dashboards; reuse helper patterns from existing charts for consistency.
+- **Styling**: Use Tailwind CSS utility classes with design tokens from `tailwind.config.ts`. Maintain a neutral palette and rounded card aesthetic.
+- **Data Fetching**: Utilize TanStack Query for caching and Supabase for persistence. Create new query keys for expanded data access.
+- **Authentication**: Managed via `useAuth` hook wrapping Supabase auth events. Ensure new pages handle loading and role checks.
+- **Charts**: Use Recharts consistently across dashboards, following existing patterns.
 
 ## Testing & Quality
-
-- Run `npm run lint` before committing to catch obvious issues.
-- Consider adding component or integration tests when modifying core workflows (no tests are currently included).
+- Run `npm run lint` before committing to catch issues.
+- Consider adding tests for core workflows (currently no tests are included).
 
 ## Deployment
-
-- The project is Vite-based and produces static assets via `npm run build`.
-- Ensure environment variables are configured in the hosting provider (URL/key for Supabase).
+- Build static assets with `npm run build`.
+- Configure environment variables in your hosting provider.
+- Deploy to platforms like Vercel, Netlify, or any static hosting service.
 
 ## Contributing
-
-1. Fork and clone the repository.
+1. Fork the repository.
 2. Create a feature branch (`git checkout -b feature/name`).
-3. Make your changes and add tests or storybook snippets when applicable.
-4. Run `npm run lint` and `npm run build` to verify.
-5. Commit using clear messages and open a pull request with screenshots for UI updates.
+3. Make changes and run `npm run lint` and `npm run build`.
+4. Commit with clear messages and open a pull request with screenshots for UI changes.
 
 ## License
+This project is provided without an explicit license. Contact maintainers for reuse or distribution terms.
 
-This project is currently provided without an explicit license. If you plan to reuse or distribute the code, please discuss licensing terms with the maintainers.
+## Screenshots
+(Add screenshots here if available, e.g., dashboard views, QR scanning interface)
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
-
-**Edit a file directly in GitHub**
-
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
-
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
+## Support
+For questions or issues, please open an issue in the repository.

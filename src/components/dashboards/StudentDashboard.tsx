@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import api from '@/lib/api';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,27 +14,19 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip, BarChart, Ba
 export default function StudentDashboard() {
   const { user } = useAuth();
   const [passes, setPasses] = useState<any[]>([]);
-  const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [showApplyDialog, setShowApplyDialog] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
 
   useEffect(() => {
     fetchPasses();
-    fetchProfile();
   }, [user]);
 
   const fetchPasses = async () => {
     if (!user) return;
 
     try {
-      const { data, error } = await supabase
-        .from('gatepasses')
-        .select('*')
-        .eq('student_id', user.id)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
+      const { data } = await api.get('/gatepass/my');
       setPasses(data || []);
     } catch (error) {
       console.error('Error fetching passes:', error);
@@ -44,23 +36,8 @@ export default function StudentDashboard() {
     }
   };
 
-  const fetchProfile = async () => {
-    if (!user) return;
-
-    try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single();
-
-      if (error) throw error;
-      setProfile(data);
-    } catch (error) {
-      console.error('Error fetching profile:', error);
-      toast.error('Failed to load profile');
-    }
-  };
+  // Profile data is now available in user context
+  const profile = user;
 
   const stats = {
     total: passes.length,
@@ -82,7 +59,7 @@ export default function StudentDashboard() {
 
   // Monthly pass data
   const monthlyData = passes.reduce((acc: any[], pass) => {
-    const month = new Date(pass.created_at).toLocaleDateString('en-US', { month: 'short' });
+    const month = new Date(pass.createdAt).toLocaleDateString('en-US', { month: 'short' });
     const existing = acc.find(item => item.month === month);
     if (existing) {
       existing.count++;
@@ -111,11 +88,11 @@ export default function StudentDashboard() {
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 <div>
                   <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Full Name</p>
-                  <p className="text-base font-semibold text-slate-900">{profile.full_name || ''}</p>
+                  <p className="text-base font-semibold text-slate-900">{profile.fullName || ''}</p>
                 </div>
                 <div>
                   <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Roll Number</p>
-                  <p className="text-base font-semibold text-slate-900">{profile.roll_no || ''}</p>
+                  <p className="text-base font-semibold text-slate-900">{profile.rollNo || ''}</p>
                 </div>
                 <div>
                   <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Hostel</p>
@@ -123,11 +100,11 @@ export default function StudentDashboard() {
                 </div>
                 <div>
                   <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Parent Contact</p>
-                  <p className="text-base font-semibold text-slate-900">{profile.parent_contact || ''}</p>
+                  <p className="text-base font-semibold text-slate-900">{profile.parentContact || ''}</p>
                 </div>
                 <div>
                   <p className="text-xs font-medium uppercase tracking-wide text-slate-500">College Email</p>
-                  <p className="text-base font-semibold text-slate-900">{profile.college_email || ''}</p>
+                  <p className="text-base font-semibold text-slate-900">{profile.email || ''}</p>
                 </div>
               </div>
             </CardContent>
@@ -196,12 +173,12 @@ export default function StudentDashboard() {
                 <PieChart>
                   <defs>
                     <linearGradient id="colorPending" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#2D9CDB" stopOpacity={0.9}/>
-                      <stop offset="95%" stopColor="#56CCF2" stopOpacity={0.9}/>
+                      <stop offset="5%" stopColor="#2D9CDB" stopOpacity={0.9} />
+                      <stop offset="95%" stopColor="#56CCF2" stopOpacity={0.9} />
                     </linearGradient>
                     <linearGradient id="colorApproved" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#27AE60" stopOpacity={0.9}/>
-                      <stop offset="95%" stopColor="#6FCF97" stopOpacity={0.9}/>
+                      <stop offset="5%" stopColor="#27AE60" stopOpacity={0.9} />
+                      <stop offset="95%" stopColor="#6FCF97" stopOpacity={0.9} />
                     </linearGradient>
                   </defs>
                   <Pie
@@ -221,9 +198,9 @@ export default function StudentDashboard() {
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: 'rgba(255,255,255,0.95)', 
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: 'rgba(255,255,255,0.95)',
                       border: '2px solid #e0e0e0',
                       borderRadius: '8px',
                       boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
@@ -244,23 +221,23 @@ export default function StudentDashboard() {
                 <BarChart data={monthlyData}>
                   <defs>
                     <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#1E40AF" stopOpacity={0.9}/>
-                      <stop offset="95%" stopColor="#7C3AED" stopOpacity={0.8}/>
+                      <stop offset="5%" stopColor="#1E40AF" stopOpacity={0.9} />
+                      <stop offset="95%" stopColor="#7C3AED" stopOpacity={0.8} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
                   <XAxis dataKey="month" stroke="#374151" />
                   <YAxis stroke="#374151" />
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: 'rgba(255,255,255,0.95)', 
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: 'rgba(255,255,255,0.95)',
                       border: '2px solid #e0e0e0',
                       borderRadius: '8px'
                     }}
                   />
-                  <Bar 
-                    dataKey="count" 
-                    fill="url(#barGradient)" 
+                  <Bar
+                    dataKey="count"
+                    fill="url(#barGradient)"
                     radius={[8, 8, 0, 0]}
                   />
                 </BarChart>

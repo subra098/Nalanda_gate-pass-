@@ -29,7 +29,7 @@ export default function PassCard({ pass, onUpdate }: PassCardProps) {
   };
 
   const canShowQR = ['superintendent_approved', 'exited'].includes(pass.status);
-  const canRequestExtension = pass.status === 'exited' && 
+  const canRequestExtension = pass.status === 'exited' &&
     new Date(pass.expected_return_at) < new Date();
 
   const statusBadge = getStatusBadge(pass.status);
@@ -43,7 +43,7 @@ export default function PassCard({ pass, onUpdate }: PassCardProps) {
               <div className="flex items-center gap-2">
                 <MapPin className="h-4 w-4 text-muted-foreground" />
                 <span className="font-semibold capitalize">
-                  {pass.destination_type.replace('_', ' ')}
+                  {pass.destination_type?.replace('_', ' ') || 'Unknown'}
                 </span>
               </div>
               <p className="text-sm text-muted-foreground">{pass.destination_details}</p>
@@ -55,9 +55,17 @@ export default function PassCard({ pass, onUpdate }: PassCardProps) {
             <p><strong>Reason:</strong> {pass.reason}</p>
             <p className="flex items-center gap-2">
               <Clock className="h-4 w-4" />
-              <strong>Expected Return:</strong> {new Date(pass.expected_return_at).toLocaleString()}
+              <strong>Expected Return:</strong> {(() => {
+                try {
+                  return pass.expected_return_at ? new Date(pass.expected_return_at).toLocaleString() : 'N/A';
+                } catch (e) { return 'Invalid Date'; }
+              })()}
             </p>
-            <p><strong>Applied:</strong> {new Date(pass.created_at).toLocaleString()}</p>
+            <p><strong>Applied:</strong> {(() => {
+              try {
+                return pass.created_at ? new Date(pass.created_at).toLocaleString() : 'N/A';
+              } catch (e) { return 'Invalid Date'; }
+            })()}</p>
           </div>
 
           {pass.attendant_notes && (
@@ -91,8 +99,8 @@ export default function PassCard({ pass, onUpdate }: PassCardProps) {
         </CardContent>
       </Card>
 
-      {showQR && pass.qr_code_data && (
-        <QRCodeDisplay 
+      {showQR && (
+        <QRCodeDisplay
           qrData={pass.qr_code_data}
           pass={pass}
           onClose={() => setShowQR(false)}

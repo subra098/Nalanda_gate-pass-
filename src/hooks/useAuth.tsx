@@ -1,14 +1,23 @@
 import { createContext, useContext, useEffect, useState } from 'react';
-import { User, Session } from '@supabase/supabase-js';
-import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
+import api from '@/lib/api';
 
 type UserRole = 'student' | 'hostel_attendant' | 'superintendent' | 'security_guard';
 
+interface User {
+  id: string;
+  email: string;
+  fullName: string;
+  role: UserRole;
+  hostel?: string | null;
+  rollNo?: string | null;
+  parentContact?: string | null;
+  collegeEmail?: string | null;
+}
+
 interface AuthContextType {
   user: User | null;
-  session: Session | null;
   role: UserRole | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
@@ -20,131 +29,92 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
   const [role, setRole] = useState<UserRole | null>(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Set up auth state listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        
-        if (session?.user) {
-          setTimeout(() => {
-            fetchUserRole(session.user.id);
-          }, 0);
-        } else {
-          setRole(null);
-        }
-      }
-    );
-
-    // Check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        fetchUserRole(session.user.id);
-      } else {
-        setLoading(false);
-      }
-    });
-
-    return () => subscription.unsubscribe();
+    checkAuth();
   }, []);
 
-  const fetchUserRole = async (userId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', userId)
-        .maybeSingle();
+  const checkAuth = async () => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      setLoading(false);
+      return;
+    }
 
-      if (error) throw error;
-      if (data) {
-        setRole(data.role as UserRole);
-      }
+    try {
+      const { data } = await api.get("/auth/me");
+      // Convert role from uppercase (backend) to lowercase (frontend)
+      const userWithLowerRole = {
+        ...data,
+        role: data.role.toLowerCase()
+      };
+      setUser(userWithLowerRole);
+      setRole(userWithLowerRole.role);
     } catch (error) {
-      console.error('Error fetching role:', error);
+      console.error("Auth check failed:", error);
+      localStorage.removeItem("token");
+      setUser(null);
+      setRole(null);
     } finally {
       setLoading(false);
     }
   };
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) {
-      toast.error(error.message);
+    try {
+      const { data } = await api.post("/auth/login", { email, password });
+      localStorage.setItem("token", data.token);
+      const userWithLowerRole = { ...data.user, role: data.user.role.toLowerCase() };
+      setUser(userWithLowerRole);
+      setRole(userWithLowerRole.role);
+      toast.success('Signed in successfully');
+      navigate('/');
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Login failed");
       throw error;
     }
-    toast.success('Signed in successfully');
   };
 
   const signUp = async (
-    email: string, 
-    password: string, 
-    fullName: string, 
+    email: string,
+    password: string,
+    fullName: string,
     role: UserRole,
     additionalData?: any
   ) => {
-    const redirectUrl = `${window.location.origin}/`;
-    
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: redirectUrl,
-        data: { full_name: fullName }
-      }
-    });
-
-    if (error) {
-      toast.error(error.message);
-      throw error;
-    }
-
-    if (data.user) {
-      // Update profile with additional data
-      await supabase
-        .from('profiles')
-        .update({
-          full_name: fullName,
-          ...additionalData
-        })
-        .eq('id', data.user.id);
-
-      // Assign role
-      await supabase
-        .from('user_roles')
-        .insert({ user_id: data.user.id, role });
-
+    try {
+      const { data } = await api.post("/auth/register", {
+        email,
+        password,
+        fullName,
+        role,
+        ...additionalData
+      });
+      localStorage.setItem("token", data.token);
+      const userWithLowerRole = { ...data.user, role: data.user.role.toLowerCase() };
+      setUser(userWithLowerRole);
+      setRole(userWithLowerRole.role);
       toast.success('Account created successfully');
+      navigate('/');
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Registration failed");
+      throw error;
     }
   };
 
   const signOut = async () => {
-    const { error } = await supabase.auth.signOut();
-    // Clear local state even if session doesn't exist on server
-    setRole(null);
+    localStorage.removeItem("token");
     setUser(null);
-    setSession(null);
-    
-    // Only show error if it's not a session_not_found error
-    if (error && error.message !== 'Session from session_id claim in JWT does not exist') {
-      toast.error(error.message);
-      throw error;
-    }
-    
+    setRole(null);
     navigate('/auth');
     toast.success('Signed out successfully');
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, role, loading, signIn, signUp, signOut }}>
+    <AuthContext.Provider value={{ user, role, loading, signIn, signUp, signOut }}>
       {children}
     </AuthContext.Provider>
   );
