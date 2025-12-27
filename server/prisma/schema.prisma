@@ -42,23 +42,23 @@ model User {
   createdAt     DateTime  @default(now()) @map("created_at")
   updatedAt     DateTime  @updatedAt @map("updated_at")
 
-  gatepasses           Gatepass[]
+  chandakaPasses       ChandakaPass[]
+  bhubaneswarPasses    BhubaneswarPass[]
+  homePasses           HomePass[]
   securityScanLogs     ScanLog[] @relation("SecurityGuardScans")
 
   @@map("users")
 }
 
-model Gatepass {
+model ChandakaPass {
   id                 String          @id @default(uuid())
   studentId          String          @map("student_id")
   student            User            @relation(fields: [studentId], references: [id])
-  destinationType    DestinationType @map("destination_type")
   destinationDetails String          @map("destination_details")
   reason             String
   expectedReturnAt   DateTime        @map("expected_return_at")
   status             PassStatus      @default(PENDING)
   qrCodeData         String?         @map("qr_code_data")
-  parentConfirmed    Boolean?        @default(false) @map("parent_confirmed")
   attendantId        String?         @map("attendant_id")
   superintendentId   String?         @map("superintendent_id")
   attendantNotes     String?         @map("attendant_notes")
@@ -68,29 +68,78 @@ model Gatepass {
   updatedAt          DateTime        @updatedAt @map("updated_at")
 
   scanLogs           ScanLog[]
-  extensionRequests  ExtensionRequest[]
 
-  @@map("gatepasses")
+  @@map("chandaka_passes")
 }
 
-model ExtensionRequest {
-  id                  String   @id @default(uuid())
-  gatepassId          String   @map("gatepass_id")
-  gatepass            Gatepass @relation(fields: [gatepassId], references: [id])
-  newExpectedReturnAt DateTime @map("new_expected_return_at")
-  reason              String
-  status              String   @default("PENDING")
-  superintendentNotes String?  @map("superintendent_notes")
-  createdAt           DateTime @default(now()) @map("created_at")
-  updatedAt           DateTime @updatedAt @map("updated_at")
+model BhubaneswarPass {
+  id                 String          @id @default(uuid())
+  studentId          String          @map("student_id")
+  student            User            @relation(fields: [studentId], references: [id])
+  destinationDetails String          @map("destination_details")
+  reason             String
+  expectedReturnAt   DateTime        @map("expected_return_at")
+  status             PassStatus      @default(PENDING)
+  qrCodeData         String?         @map("qr_code_data")
+  attendantId        String?         @map("attendant_id")
+  superintendentId   String?         @map("superintendent_id")
+  attendantNotes     String?         @map("attendant_notes")
+  superintendentNotes String?        @map("superintendent_notes")
+  
+  createdAt          DateTime        @default(now()) @map("created_at")
+  updatedAt          DateTime        @updatedAt @map("updated_at")
 
-  @@map("extension_requests")
+  scanLogs           ScanLog[]
+
+  @@map("bhubaneswar_passes")
+}
+
+model HomePass {
+  id                 String          @id @default(uuid())
+  studentId          String          @map("student_id")
+  student            User            @relation(fields: [studentId], references: [id])
+  
+  // Home-specific fields from Leave Application
+  roomNo             String          @map("room_no")
+  branch             String
+  semester           String
+  section            String
+  purpose            String          @map("reason")
+  fromDate           DateTime        @map("from_date")
+  expectedReturnAt   DateTime        @map("expected_return_at")
+  destinationAddress String          @map("destination_address")
+  meansOfTravel      String          @map("means_of_travel")
+  localGuardianName  String?         @map("local_guardian_name")
+  localGuardianContact String?       @map("local_guardian_contact")
+  parentName         String?         @map("parent_name")
+  
+  status             PassStatus      @default(PENDING)
+  qrCodeData         String?         @map("qr_code_data")
+  attendantId        String?         @map("attendant_id")
+  superintendentId   String?         @map("superintendent_id")
+  attendantNotes     String?         @map("attendant_notes")
+  superintendentNotes String?        @map("superintendent_notes")
+  
+  createdAt          DateTime        @default(now()) @map("created_at")
+  updatedAt          DateTime        @updatedAt @map("updated_at")
+
+  scanLogs           ScanLog[]
+
+  @@map("home_passes")
 }
 
 model ScanLog {
   id              String   @id @default(uuid())
-  gatepassId      String   @map("gatepass_id")
-  gatepass        Gatepass @relation(fields: [gatepassId], references: [id])
+  
+  chandakaPassId  String?  @map("chandaka_pass_id")
+  chandakaPass    ChandakaPass? @relation(fields: [chandakaPassId], references: [id])
+  
+  bhubaneswarPassId String? @map("bhubaneswar_pass_id")
+  bhubaneswarPass   BhubaneswarPass? @relation(fields: [bhubaneswarPassId], references: [id])
+  
+  homePassId      String?  @map("home_pass_id")
+  homePass        HomePass? @relation(fields: [homePassId], references: [id])
+  
   securityGuardId String   @map("security_guard_id")
   securityGuard   User     @relation("SecurityGuardScans", fields: [securityGuardId], references: [id])
   action          String   // "ENTRY" or "EXIT"

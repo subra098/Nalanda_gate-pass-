@@ -4,7 +4,16 @@ import { hashPassword, comparePassword } from "../utils/password.js";
 
 export const register = async (req, res) => {
     try {
-        const { email, password, fullName, role, hostel, rollNo, parentContact } = req.body;
+        console.log("Register attempt body:", req.body);
+        let { email, password, fullName, role, hostel, rollNo, parentContact } = req.body;
+
+        // Trim all inputs to handle mobile quirks
+        email = email?.trim().toLowerCase();
+        password = password?.trim();
+        fullName = fullName?.trim();
+        hostel = hostel?.trim();
+        rollNo = rollNo?.trim();
+        parentContact = parentContact?.trim();
 
         const existingUser = await prisma.user.findUnique({ where: { email } });
         if (existingUser) {
@@ -38,6 +47,9 @@ export const register = async (req, res) => {
                 email: user.email,
                 fullName: user.fullName,
                 role: user.role,
+                hostel: user.hostel,
+                rollNo: user.rollNo,
+                parentContact: user.parentContact,
             },
         });
     } catch (error) {
@@ -48,19 +60,29 @@ export const register = async (req, res) => {
 
 export const login = async (req, res) => {
     try {
-        const { email, password } = req.body;
+        console.log("Login attempt body:", req.body);
+        let { email, password } = req.body;
+
+        // Trim and lowercase email to handle mobile keyboard quirks
+        email = email?.trim().toLowerCase();
+        password = password?.trim();
+
+        console.log(`Login attempt for: ${email}`);
 
         const user = await prisma.user.findUnique({ where: { email } });
         if (!user) {
+            console.log(`User not found: ${email}`);
             return res.status(400).json({ message: "Invalid credentials" });
         }
 
         const isMatch = await comparePassword(password, user.password);
         if (!isMatch) {
+            console.log(`Password mismatch for: ${email}`);
             return res.status(400).json({ message: "Invalid credentials" });
         }
 
         const token = generateToken(user);
+        console.log(`Login successful for: ${email}`);
 
         res.json({
             message: "Login successful",
@@ -70,7 +92,9 @@ export const login = async (req, res) => {
                 email: user.email,
                 fullName: user.fullName,
                 role: user.role,
-                hostel: user.hostel, // Needed for attendant logic
+                hostel: user.hostel,
+                rollNo: user.rollNo,
+                parentContact: user.parentContact,
             },
         });
     } catch (error) {

@@ -1,11 +1,19 @@
 import { useNavigate } from 'react-router-dom';
+import { useEffect } from 'react';
+import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Shield, LogIn } from 'lucide-react';
-
 import { motion } from 'framer-motion';
 
 const Index = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+
+  useEffect(() => {
+    if (user) {
+      navigate('/dashboard');
+    }
+  }, [user, navigate]);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-950 px-4 py-10">

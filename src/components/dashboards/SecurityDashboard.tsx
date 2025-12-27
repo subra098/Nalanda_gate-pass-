@@ -30,15 +30,7 @@ export default function SecurityDashboard() {
   const fetchLogs = async () => {
     try {
       const { data: logsData } = await api.get('/security/logs');
-
-      // Transform data to match UI expectations
-      const formattedLogs = logsData.map((log: any) => ({
-        ...log,
-        gatepasses: log.gatepass,
-        profile: log.gatepass?.student
-      }));
-
-      setLogs(formattedLogs);
+      setLogs(logsData || []);
     } catch (error) {
       console.error('Error:', error);
       toast.error('Failed to load logs');
@@ -89,7 +81,7 @@ export default function SecurityDashboard() {
   };
 
   // Filter logs based on active tab
-  const filteredLogs = activeTab === 'all' ? logs : logs.filter(log => log.gatepasses?.destination_type === activeTab);
+  const filteredLogs = activeTab === 'all' ? logs : logs.filter(log => log.destination_type === activeTab);
 
   // Chart data - hourly activity
   const hourlyData = filteredLogs.reduce((acc: any[], log) => {
@@ -316,9 +308,9 @@ export default function SecurityDashboard() {
                             <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Pass ID</p>
                             <p className="text-base font-semibold text-slate-900 break-all">{log.gatepass_id}</p>
                             <div className="flex flex-col gap-1 text-sm text-slate-500 sm:flex-row sm:items-center sm:gap-3">
-                              <span className="font-medium text-slate-900">{log.profile?.full_name || 'Unknown student'}</span>
+                              <span className="font-medium text-slate-900">{log.profiles?.full_name || 'Unknown student'}</span>
                               <span className="inline-flex items-center gap-1 rounded-full bg-slate-200 px-3 py-1 text-xs font-medium uppercase tracking-wide text-slate-600">
-                                Reg. No: {log.profile?.roll_no || 'N/A'}
+                                Reg. No: {log.profiles?.roll_no || 'N/A'}
                               </span>
                             </div>
                             <p className="text-xs text-slate-400">
@@ -390,19 +382,19 @@ export default function SecurityDashboard() {
                 <div className="grid gap-4 rounded-2xl bg-slate-50 p-4 md:grid-cols-2">
                   <div>
                     <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Student Name</p>
-                    <p className="text-base font-semibold text-slate-900">{scannedPass.profile?.full_name || ''}</p>
+                    <p className="text-base font-semibold text-slate-900">{scannedPass.profiles?.full_name || ''}</p>
                   </div>
                   <div>
                     <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Registration Number</p>
-                    <p className="text-base font-semibold text-slate-900">{scannedPass.profile?.roll_no || ''}</p>
+                    <p className="text-base font-semibold text-slate-900">{scannedPass.profiles?.roll_no || ''}</p>
                   </div>
                   <div>
                     <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Hostel</p>
-                    <p className="text-base font-semibold text-slate-900">{scannedPass.profile?.hostel || ''}</p>
+                    <p className="text-base font-semibold text-slate-900">{scannedPass.profiles?.hostel || ''}</p>
                   </div>
                   <div>
                     <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Contact Number</p>
-                    <p className="text-base font-semibold text-slate-900">{scannedPass.profile?.parent_contact || ''}</p>
+                    <p className="text-base font-semibold text-slate-900">{scannedPass.profiles?.parent_contact || ''}</p>
                   </div>
                 </div>
               </div>

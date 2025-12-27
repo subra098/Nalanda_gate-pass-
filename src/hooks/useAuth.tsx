@@ -71,9 +71,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(userWithLowerRole);
       setRole(userWithLowerRole.role);
       toast.success('Signed in successfully');
-      navigate('/');
+      navigate('/dashboard');
     } catch (error: any) {
-      toast.error(error.response?.data?.message || "Login failed");
+      console.error("Login detail error:", {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status,
+        url: error.config?.url
+      });
+      toast.error(error.response?.data?.message || "Login failed - Check console for details");
       throw error;
     }
   };
@@ -98,9 +104,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(userWithLowerRole);
       setRole(userWithLowerRole.role);
       toast.success('Account created successfully');
-      navigate('/');
+      navigate('/dashboard');
     } catch (error: any) {
-      toast.error(error.response?.data?.message || "Registration failed");
+      console.error("Registration detail error:", {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status,
+        url: error.config?.url
+      });
+      toast.error(error.response?.data?.message || "Registration failed - Check console for details");
       throw error;
     }
   };

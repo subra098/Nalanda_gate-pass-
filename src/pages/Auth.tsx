@@ -126,6 +126,9 @@ export default function Auth() {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       required
+                      autoCapitalize="none"
+                      autoCorrect="off"
+                      spellCheck="false"
                       className="h-11 rounded-xl border-slate-200 bg-white text-sm shadow-sm focus:border-slate-400 focus:ring-slate-400"
                     />
                   </div>

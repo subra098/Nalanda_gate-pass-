@@ -1,7 +1,9 @@
 import axios from "axios";
 
 const api = axios.create({
-    baseURL: "http://localhost:5000/api",
+    // Use relative path by default to work with Vite proxy in development
+    // This allows the phone to access the API via the same port as the frontend
+    baseURL: import.meta.env.VITE_API_URL || "/api",
     headers: {
         "Content-Type": "application/json",
     },

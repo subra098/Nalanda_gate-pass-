@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { CheckCircle, XCircle, Phone, User, FileText } from 'lucide-react';
+import PassCard from '@/components/shared/PassCard';
 import Layout from '@/components/Layout';
 import { toast } from 'sonner';
 import { Textarea } from '@/components/ui/textarea';
@@ -37,13 +38,7 @@ export default function AttendantDashboard() {
       // Note: In real app, filter by hostel. Here we fetch all.
       const { data } = await api.get('/gatepass/list?status=PENDING,ATTENDANT_APPROVED');
 
-      // Transform data to match UI expectations (flatten student profile)
-      const formattedPasses = data.map((pass: any) => ({
-        ...pass,
-        profiles: pass.student // Remap included 'student' to 'profiles' to match legacy code
-      }));
-
-      setPasses(formattedPasses);
+      setPasses(data);
     } catch (error) {
       console.error('Error:', error);
       toast.error('Failed to load passes');
@@ -59,18 +54,7 @@ export default function AttendantDashboard() {
       // Fetch approved passes
       const { data } = await api.get('/gatepass/list?status=ATTENDANT_APPROVED,SUPERINTENDENT_APPROVED');
 
-      const startOfDay = new Date();
-      startOfDay.setHours(0, 0, 0, 0);
-
-      const todays = data.filter((p: any) =>
-        p.attendantId === user.id &&
-        new Date(p.updatedAt) >= startOfDay
-      ).map((pass: any) => ({
-        ...pass,
-        profiles: pass.student
-      }));
-
-      setTodaysApprovals(todays);
+      setTodaysApprovals(data);
 
     } catch (error) {
       console.error('Error fetching today\'s approvals:', error);
@@ -110,14 +94,6 @@ export default function AttendantDashboard() {
       console.error('Error:', error);
       toast.error('Failed to reject pass');
     }
-  };
-
-  const getStatusBadge = (status: string) => {
-    const variants: Record<string, any> = {
-      pending: { label: 'Pending Review', variant: 'secondary' },
-      attendant_approved: { label: 'Waiting for Superintendent', variant: 'default' },
-    };
-    return variants[status] || { label: status, variant: 'outline' };
   };
 
   // Chart data with vibrant colors
@@ -308,66 +284,50 @@ export default function AttendantDashboard() {
                 ) : (
                   <div className="space-y-4">
                     {passes.map((pass) => (
-                      <Card key={pass.id}>
-                        <CardContent className="pt-6">
-                          <div className="flex items-start justify-between mb-4">
-                            <div className="space-y-1">
-                              <p className="font-semibold">{pass.profiles?.full_name}</p>
-                              <p className="text-sm text-muted-foreground">
-                                Roll No: {pass.profiles?.roll_no}
-                              </p>
-                            </div>
-                            <Badge {...getStatusBadge(pass.status)}>{getStatusBadge(pass.status).label}</Badge>
+                      <PassCard key={pass.id} pass={pass} showActions={false}>
+                        {pass.status === 'pending' && (
+                          <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-slate-100 dark:border-slate-800 w-full">
+                            <Button
+                              size="sm"
+                              onClick={() => handleApprove(pass)}
+                              className="bg-green-600 hover:bg-green-700 h-9"
+                            >
+                              <CheckCircle className="h-4 w-4 mr-1.5" />
+                              Approve
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              onClick={() => handleReject(pass)}
+                              className="h-9"
+                            >
+                              <XCircle className="h-4 w-4 mr-1.5" />
+                              Reject
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                setSelectedPass(pass);
+                                setNotes('');
+                              }}
+                              className="h-9"
+                            >
+                              <FileText className="h-4 w-4 mr-1.5" />
+                              Add Notes
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => window.open(`tel:${pass.profiles?.parent_contact}`)}
+                              className="h-9"
+                            >
+                              <Phone className="h-4 w-4 mr-1.5" />
+                              Call Parent
+                            </Button>
                           </div>
-
-                          <div className="space-y-2 text-sm mb-4">
-                            <p><strong>Destination:</strong> {pass.destination_type} - {pass.destination_details}</p>
-                            <p><strong>Reason:</strong> {pass.reason}</p>
-                            <p><strong>Expected Return:</strong> {new Date(pass.expected_return_at).toLocaleString()}</p>
-                            <p><strong>Parent Contact:</strong> {pass.profiles?.parent_contact}</p>
-                          </div>
-
-                          {pass.status === 'pending' && (
-                            <div className="flex flex-wrap gap-2">
-                              <Button
-                                size="sm"
-                                onClick={() => handleApprove(pass)}
-                                className="bg-green-600 hover:bg-green-700"
-                              >
-                                <CheckCircle className="h-4 w-4 mr-1" />
-                                Approve
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="destructive"
-                                onClick={() => handleReject(pass)}
-                              >
-                                <XCircle className="h-4 w-4 mr-1" />
-                                Reject
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => {
-                                  setSelectedPass(pass);
-                                  setNotes('');
-                                }}
-                              >
-                                <FileText className="h-4 w-4 mr-1" />
-                                Add Notes
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => window.open(`tel:${pass.profiles?.parent_contact}`)}
-                              >
-                                <Phone className="h-4 w-4 mr-1" />
-                                Call Parent
-                              </Button>
-                            </div>
-                          )}
-                        </CardContent>
-                      </Card>
+                        )}
+                      </PassCard>
                     ))}
                   </div>
                 )}
@@ -387,30 +347,7 @@ export default function AttendantDashboard() {
                 ) : (
                   <div className="space-y-4">
                     {todaysApprovals.map((pass) => (
-                      <Card key={pass.id}>
-                        <CardContent className="pt-6 space-y-4">
-                          <div className="flex justify-between">
-                            <div>
-                              <p className="font-semibold">{pass.profiles?.full_name}</p>
-                              <p className="text-sm text-muted-foreground">
-                                {pass.profiles?.roll_no} • {pass.profiles?.hostel}
-                              </p>
-                            </div>
-                            <Badge variant="default">
-                              {pass.status === 'superintendent_approved' ? 'Fully Approved' : 'Forwarded'}
-                            </Badge>
-                          </div>
-                          <div className="space-y-2 text-sm">
-                            <p><strong>Destination:</strong> {pass.destination_type} - {pass.destination_details}</p>
-                            <p><strong>Reason:</strong> {pass.reason}</p>
-                            <p><strong>Expected Return:</strong> {new Date(pass.expected_return_at).toLocaleString()}</p>
-                            <p><strong>Approved At:</strong> {new Date(pass.updated_at).toLocaleString()}</p>
-                            {pass.attendant_notes && (
-                              <p><strong>Your Notes:</strong> {pass.attendant_notes}</p>
-                            )}
-                          </div>
-                        </CardContent>
-                      </Card>
+                      <PassCard key={pass.id} pass={pass} showActions={false} />
                     ))}
                   </div>
                 )}

@@ -8,7 +8,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Layout from '@/components/Layout';
 import { toast } from 'sonner';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
-import { LayoutDashboard, Users, FileText, CheckCircle, Clock, XCircle, User } from 'lucide-react';
+import { LayoutDashboard, Users, FileText, CheckCircle, Clock, XCircle, User, ShieldCheck } from 'lucide-react';
+import PassCard from '@/components/shared/PassCard';
 
 export default function SuperintendentDashboard() {
   const { user } = useAuth();
@@ -32,12 +33,7 @@ export default function SuperintendentDashboard() {
       // Fetch passes awaiting approval (Attendant Approved)
       const { data: passData } = await api.get('/gatepass/list?status=ATTENDANT_APPROVED');
 
-      const formattedPasses = passData.map((pass: any) => ({
-        ...pass,
-        profiles: pass.student
-      }));
-
-      setPasses(formattedPasses || []);
+      setPasses(passData || []);
 
       // Fetch extension requests - API not yet implemented for extensions, mock or skip for now
       // Assuming we need to add an endpoint for extensions later. 
@@ -63,10 +59,7 @@ export default function SuperintendentDashboard() {
       const todays = data.filter((p: any) =>
         p.superintendentId === user.id &&
         new Date(p.updatedAt) >= startOfDay
-      ).map((pass: any) => ({
-        ...pass,
-        profiles: pass.student
-      }));
+      );
 
       setTodaysApprovals(todays);
     } catch (error) {
@@ -325,47 +318,27 @@ export default function SuperintendentDashboard() {
                 ) : (
                   <div className="space-y-4">
                     {passes.map((pass) => (
-                      <Card key={pass.id}>
-                        <CardContent className="pt-6 space-y-4">
-                          <div className="flex justify-between">
-                            <div>
-                              <p className="font-semibold">{pass.profiles?.full_name}</p>
-                              <p className="text-sm text-muted-foreground">
-                                {pass.profiles?.roll_no} • {pass.profiles?.hostel}
-                              </p>
-                            </div>
-                            <Badge variant="secondary">
-                              {pass.status === 'attendant_approved' ? 'Attendant Approved' : 'Pending'}
-                            </Badge>
-                          </div>
-                          <div className="space-y-2 text-sm">
-                            <p><strong>Destination:</strong> {pass.destination_type} - {pass.destination_details}</p>
-                            <p><strong>Reason:</strong> {pass.reason}</p>
-                            <p><strong>Expected Return:</strong> {new Date(pass.expected_return_at).toLocaleString()}</p>
-                            {pass.attendant_notes && (
-                              <p><strong>Attendant Notes:</strong> {pass.attendant_notes}</p>
-                            )}
-                          </div>
-                          <div className="flex gap-2">
-                            <Button
-                              size="sm"
-                              onClick={() => handleApprovePass(pass.id)}
-                              className="bg-green-600 hover:bg-green-700"
-                            >
-                              <CheckCircle className="h-4 w-4 mr-1" />
-                              Approve & Generate QR
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="destructive"
-                              onClick={() => handleRejectPass(pass.id)}
-                            >
-                              <XCircle className="h-4 w-4 mr-1" />
-                              Reject
-                            </Button>
-                          </div>
-                        </CardContent>
-                      </Card>
+                      <PassCard key={pass.id} pass={pass} showActions={false}>
+                        <div className="flex gap-2 mt-4 pt-4 border-t border-slate-100 dark:border-slate-800 w-full">
+                          <Button
+                            size="sm"
+                            onClick={() => handleApprovePass(pass.id)}
+                            className="bg-green-600 hover:bg-green-700 h-9"
+                          >
+                            <CheckCircle className="h-4 w-4 mr-1.5" />
+                            Approve & Generate QR
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={() => handleRejectPass(pass.id)}
+                            className="h-9"
+                          >
+                            <XCircle className="h-4 w-4 mr-1.5" />
+                            Reject
+                          </Button>
+                        </div>
+                      </PassCard>
                     ))}
                   </div>
                 )}
@@ -429,28 +402,7 @@ export default function SuperintendentDashboard() {
                 ) : (
                   <div className="space-y-4">
                     {todaysApprovals.map((pass) => (
-                      <Card key={pass.id}>
-                        <CardContent className="pt-6 space-y-4">
-                          <div className="flex justify-between">
-                            <div>
-                              <p className="font-semibold">{pass.profiles?.full_name}</p>
-                              <p className="text-sm text-muted-foreground">
-                                {pass.profiles?.roll_no} • {pass.profiles?.hostel}
-                              </p>
-                            </div>
-                            <Badge variant="default">Fully Approved</Badge>
-                          </div>
-                          <div className="space-y-2 text-sm">
-                            <p><strong>Destination:</strong> {pass.destination_type} - {pass.destination_details}</p>
-                            <p><strong>Reason:</strong> {pass.reason}</p>
-                            <p><strong>Expected Return:</strong> {new Date(pass.expected_return_at).toLocaleString()}</p>
-                            <p><strong>Approved At:</strong> {new Date(pass.updated_at).toLocaleString()}</p>
-                            {pass.superintendent_notes && (
-                              <p><strong>Your Notes:</strong> {pass.superintendent_notes}</p>
-                            )}
-                          </div>
-                        </CardContent>
-                      </Card>
+                      <PassCard key={pass.id} pass={pass} showActions={false} />
                     ))}
                   </div>
                 )}

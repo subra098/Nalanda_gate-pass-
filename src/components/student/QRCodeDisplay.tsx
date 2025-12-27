@@ -1,7 +1,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { QRCodeSVG } from 'qrcode.react';
 import { Button } from '@/components/ui/button';
-import { Download, AlertCircle, Clock, MapPin, Shield } from 'lucide-react';
+import { Download, AlertCircle, Clock, MapPin, Shield, User } from 'lucide-react';
 import { useEffect } from 'react';
 
 interface QRCodeDisplayProps {
@@ -109,6 +109,19 @@ export default function QRCodeDisplay({ qrData, pass, onClose }: QRCodeDisplayPr
             </div>
 
             <div className="mt-8 w-full space-y-4">
+              <div className="flex items-start gap-3">
+                <div className="mt-1 bg-indigo-50 dark:bg-indigo-900/30 p-2 rounded-lg text-indigo-600">
+                  <User className="h-4 w-4" />
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Student</p>
+                  <p className="font-bold text-slate-800 dark:text-slate-200">
+                    {pass.profiles?.full_name || 'N/A'}
+                    <span className="ml-2 text-[10px] text-muted-foreground">({pass.profiles?.roll_no || 'N/A'})</span>
+                  </p>
+                </div>
+              </div>
+
               <div className="flex items-start gap-3">
                 <div className="mt-1 bg-indigo-50 dark:bg-indigo-900/30 p-2 rounded-lg text-indigo-600">
                   <MapPin className="h-4 w-4" />

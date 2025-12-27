@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Plus, QrCode, Clock, User } from 'lucide-react';
 import Layout from '@/components/Layout';
 import ApplyPassDialog from '@/components/student/ApplyPassDialog';
-import PassCard from '@/components/student/PassCard';
+import PassCard from '@/components/shared/PassCard';
 import { toast } from 'sonner';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
 

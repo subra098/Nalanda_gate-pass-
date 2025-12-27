@@ -3,60 +3,120 @@ import prisma from "../config/db.js";
 // Create a new gatepass request
 export const createGatepass = async (req, res) => {
     try {
-        const { destinationType, destinationDetails, reason, expectedReturnAt } = req.body;
+        console.log("Create Gatepass Request Body:", req.body);
+        const { destinationType, destinationDetails, reason, expectedReturnAt, ...homeFields } = req.body;
         const studentId = req.user.id;
+        const type = destinationType.toUpperCase();
 
-        // Convert destinationType to uppercase to match Prisma enum
-        const destinationTypeUpper = destinationType.toUpperCase();
+        let gatepass;
 
-        // Optional: Check if student already has an active pass?
+        if (type === "CHANDAKA") {
+            gatepass = await prisma.chandakaPass.create({
+                data: {
+                    studentId,
+                    destinationDetails,
+                    reason,
+                    expectedReturnAt: new Date(expectedReturnAt),
+                },
+            });
+        } else if (type === "BHUBANESWAR") {
+            gatepass = await prisma.bhubaneswarPass.create({
+                data: {
+                    studentId,
+                    destinationDetails,
+                    reason,
+                    expectedReturnAt: new Date(expectedReturnAt),
+                },
+            });
+        } else if (type === "HOME_OTHER") {
+            // Validate dates
+            const fDate = new Date(homeFields.fromDate);
+            const rDate = new Date(expectedReturnAt);
 
-        const gatepass = await prisma.gatepass.create({
-            data: {
-                studentId,
-                destinationType: destinationTypeUpper,
-                destinationDetails,
-                reason,
-                expectedReturnAt: new Date(expectedReturnAt),
-                status: "PENDING",
-            },
-        });
+            if (isNaN(fDate.getTime()) || isNaN(rDate.getTime())) {
+                return res.status(400).json({ message: "Invalid date format provided" });
+            }
 
-        res.status(201).json(gatepass);
+            gatepass = await prisma.homePass.create({
+                data: {
+                    studentId,
+                    roomNo: homeFields.roomNo || "N/A",
+                    branch: homeFields.branch || "N/A",
+                    semester: homeFields.semester || "N/A",
+                    section: homeFields.section || "N/A",
+                    purpose: reason || "No reason specified",
+                    fromDate: fDate,
+                    expectedReturnAt: rDate,
+                    destinationAddress: homeFields.destinationAddress || "N/A",
+                    meansOfTravel: (homeFields.meansOfTravel && homeFields.meansOfTravel !== "") ? homeFields.meansOfTravel : "Other",
+                    localGuardianName: homeFields.localGuardianName || null,
+                    localGuardianContact: homeFields.localGuardianContact || null,
+                    parentName: homeFields.parentName || null,
+                },
+            });
+        }
+
+        res.status(201).json({ ...gatepass, destination_type: type });
     } catch (error) {
-        console.error("Create Gatepass Error:", error);
-        res.status(500).json({ message: "Internal server error" });
+        console.error("Create Gatepass Detailed Error:", error);
+        res.status(500).json({ message: error.message || "Internal server error" });
     }
 };
+
+const transformPass = (pass, type) => ({
+    ...pass,
+    destination_type: type.toLowerCase(),
+    destination_details: pass.destinationDetails || pass.destinationAddress,
+    expected_return_at: pass.expectedReturnAt,
+    qr_code_data: pass.qrCodeData,
+    attendant_id: pass.attendantId,
+    superintendent_id: pass.superintendentId,
+    attendant_notes: pass.attendantNotes,
+    superintendent_notes: pass.superintendentNotes,
+    created_at: pass.createdAt,
+    updated_at: pass.updatedAt,
+    student_id: pass.studentId,
+    status: pass.status.toLowerCase(),
+    // Home specific fields
+    room_no: pass.roomNo,
+    branch: pass.branch,
+    semester: pass.semester,
+    section: pass.section,
+    from_date: pass.fromDate,
+    destination_address: pass.destinationAddress,
+    means_of_travel: pass.meansOfTravel,
+    local_guardian_name: pass.localGuardianName,
+    local_guardian_contact: pass.localGuardianContact,
+    parent_name: pass.parentName,
+    profiles: pass.student ? {
+        id: pass.student.id,
+        email: pass.student.email,
+        full_name: pass.student.fullName,
+        roll_no: pass.student.rollNo,
+        hostel: pass.student.hostel,
+        parent_contact: pass.student.parentContact,
+    } : null,
+});
 
 // Get passes for the logged-in student
 export const getMyPasses = async (req, res) => {
     try {
         const studentId = req.user.id;
-        const passes = await prisma.gatepass.findMany({
-            where: { studentId },
-            orderBy: { createdAt: "desc" },
-        });
+        const include = { student: { select: { id: true, email: true, fullName: true, rollNo: true, hostel: true, parentContact: true } } };
 
-        // Transform to match frontend expectations (snake_case)
-        const transformedPasses = passes.map(pass => ({
-            ...pass,
-            destination_type: pass.destinationType,
-            destination_details: pass.destinationDetails,
-            expected_return_at: pass.expectedReturnAt,
-            qr_code_data: pass.qrCodeData,
-            parent_confirmed: pass.parentConfirmed,
-            attendant_id: pass.attendantId,
-            superintendent_id: pass.superintendentId,
-            attendant_notes: pass.attendantNotes,
-            superintendent_notes: pass.superintendentNotes,
-            created_at: pass.createdAt,
-            updated_at: pass.updatedAt,
-            student_id: pass.studentId,
-            status: pass.status.toLowerCase(),
-        }));
+        const [chandaka, bhubaneswar, home] = await Promise.all([
+            prisma.chandakaPass.findMany({ where: { studentId }, include, orderBy: { createdAt: "desc" } }),
+            prisma.bhubaneswarPass.findMany({ where: { studentId }, include, orderBy: { createdAt: "desc" } }),
+            prisma.homePass.findMany({ where: { studentId }, include, orderBy: { createdAt: "desc" } }),
+        ]);
 
-        res.json(transformedPasses);
+        const allPasses = [
+            ...chandaka.map(p => transformPass(p, "CHANDAKA")),
+            ...bhubaneswar.map(p => transformPass(p, "BHUBANESWAR")),
+            ...home.map(p => transformPass(p, "HOME_OTHER")),
+        ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+        res.json(allPasses);
     } catch (error) {
         console.error("Get My Passes Error:", error);
         res.status(500).json({ message: "Internal server error" });
@@ -64,17 +124,16 @@ export const getMyPasses = async (req, res) => {
 };
 
 // Get pending passes (For Attendants/Superintendents)
-// Filter by hostel if needed (fetched from user logs)
 export const getPendingPasses = async (req, res) => {
     try {
-        // Ideally we filter by student's hostel matching the attendant's hostel
-        // For now, returning all pending
-        const passes = await prisma.gatepass.findMany({
-            where: { status: "PENDING" },
-            include: { student: { select: { fullName: true, rollNo: true, hostel: true } } },
-            orderBy: { createdAt: "asc" },
-        });
-        res.json(passes);
+        const include = { student: { select: { fullName: true, rollNo: true, hostel: true } } };
+        const [chandaka, bhubaneswar, home] = await Promise.all([
+            prisma.chandakaPass.findMany({ where: { status: "PENDING" }, include, orderBy: { createdAt: "asc" } }),
+            prisma.bhubaneswarPass.findMany({ where: { status: "PENDING" }, include, orderBy: { createdAt: "asc" } }),
+            prisma.homePass.findMany({ where: { status: "PENDING" }, include, orderBy: { createdAt: "asc" } }),
+        ]);
+
+        res.json([...chandaka, ...bhubaneswar, ...home]);
     } catch (error) {
         console.error("Get Pending Passes Error:", error);
         res.status(500).json({ message: "Internal server error" });
@@ -85,47 +144,22 @@ export const getPendingPasses = async (req, res) => {
 export const getPasses = async (req, res) => {
     try {
         const { status } = req.query;
-        const where = {};
-        if (status) {
-            // Allow multiple statuses comma-separated
-            const statuses = status.split(',');
-            where.status = { in: statuses };
-        }
+        const where = status ? { status: { in: status.split(',') } } : {};
+        const include = { student: { select: { id: true, email: true, fullName: true, rollNo: true, hostel: true, parentContact: true } } };
 
-        const passes = await prisma.gatepass.findMany({
-            where,
-            include: { student: { select: { id: true, email: true, fullName: true, rollNo: true, hostel: true, parentContact: true } } },
-            orderBy: { createdAt: "desc" },
-        });
+        const [chandaka, bhubaneswar, home] = await Promise.all([
+            prisma.chandakaPass.findMany({ where, include, orderBy: { createdAt: "desc" } }),
+            prisma.bhubaneswarPass.findMany({ where, include, orderBy: { createdAt: "desc" } }),
+            prisma.homePass.findMany({ where, include, orderBy: { createdAt: "desc" } }),
+        ]);
 
-        // Transform to match frontend expectations
-        const transformedPasses = passes.map(pass => ({
-            ...pass,
-            destination_type: pass.destinationType,
-            destination_details: pass.destinationDetails,
-            expected_return_at: pass.expectedReturnAt,
-            qr_code_data: pass.qrCodeData,
-            parent_confirmed: pass.parentConfirmed,
-            attendant_id: pass.attendantId,
-            superintendent_id: pass.superintendentId,
-            attendant_notes: pass.attendantNotes,
-            superintendent_notes: pass.superintendentNotes,
-            created_at: pass.createdAt,
-            updated_at: pass.updatedAt,
-            student_id: pass.studentId,
-            status: pass.status.toLowerCase(),
-            // Transform student object if present
-            profiles: pass.student ? {
-                id: pass.student.id,
-                email: pass.student.email,
-                full_name: pass.student.fullName,
-                roll_no: pass.student.rollNo,
-                hostel: pass.student.hostel,
-                parent_contact: pass.student.parentContact,
-            } : null,
-        }));
+        const allPasses = [
+            ...chandaka.map(p => transformPass(p, "CHANDAKA")),
+            ...bhubaneswar.map(p => transformPass(p, "BHUBANESWAR")),
+            ...home.map(p => transformPass(p, "HOME_OTHER")),
+        ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
-        res.json(transformedPasses);
+        res.json(allPasses);
     } catch (error) {
         console.error("Get Passes Error:", error);
         res.status(500).json({ message: "Internal server error" });
@@ -136,32 +170,17 @@ export const getPasses = async (req, res) => {
 export const updatePassStatus = async (req, res) => {
     try {
         const { id } = req.params;
-        const { status, notes } = req.body; // status: APPROVED, REJECTED
+        const { status, notes } = req.body;
         const userId = req.user.id;
         const userRole = req.user.role;
 
-        // Define next status based on role and action
-        let newStatus = status;
+        let newStatus = status === "APPROVED"
+            ? (userRole === "HOSTEL_ATTENDANT" ? "ATTENDANT_APPROVED" : "SUPERINTENDENT_APPROVED")
+            : "REJECTED";
 
-        // Generating QR Code if fully approved
-        let qrCodeData = null;
+        let qrCodeData = (newStatus === "SUPERINTENDENT_APPROVED") ? JSON.stringify({ passId: id }) : null;
 
-        if (status === "APPROVED") {
-            if (userRole === "HOSTEL_ATTENDANT") newStatus = "ATTENDANT_APPROVED";
-            if (userRole === "SUPERINTENDENT") {
-                newStatus = "SUPERINTENDENT_APPROVED";
-                // Store JSON string for QR code generation/scanning
-                qrCodeData = JSON.stringify({ passId: id });
-            }
-        } else if (status === "REJECTED") {
-            newStatus = "REJECTED";
-        }
-
-        const updateData = {
-            status: newStatus,
-            qrCodeData,
-        };
-
+        const updateData = { status: newStatus, qrCodeData };
         if (userRole === "HOSTEL_ATTENDANT") {
             updateData.attendantId = userId;
             updateData.attendantNotes = notes;
@@ -170,12 +189,19 @@ export const updatePassStatus = async (req, res) => {
             updateData.superintendentNotes = notes;
         }
 
-        const gatepass = await prisma.gatepass.update({
-            where: { id },
-            data: updateData,
-        });
+        // Try updating in each table until success
+        let updatedPass;
+        try {
+            updatedPass = await prisma.chandakaPass.update({ where: { id }, data: updateData });
+        } catch (e) {
+            try {
+                updatedPass = await prisma.bhubaneswarPass.update({ where: { id }, data: updateData });
+            } catch (e2) {
+                updatedPass = await prisma.homePass.update({ where: { id }, data: updateData });
+            }
+        }
 
-        res.json(gatepass);
+        res.json(updatedPass);
     } catch (error) {
         console.error("Update Pass Status Error:", error);
         res.status(500).json({ message: "Internal server error" });
