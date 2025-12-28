@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import api from '@/lib/api';
 
-type UserRole = 'student' | 'hostel_attendant' | 'superintendent' | 'security_guard';
+type UserRole = 'student' | 'hostel_attendant' | 'superintendent' | 'security_guard' | 'admin';
 
 interface User {
   id: string;

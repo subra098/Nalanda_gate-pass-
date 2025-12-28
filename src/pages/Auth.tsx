@@ -157,23 +157,6 @@ export default function Auth() {
               <TabsContent value="register" className="space-y-5">
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div className="space-y-1.5">
-                    <Label htmlFor="role" className="text-xs font-medium uppercase tracking-wide text-slate-500">
-                      Role
-                    </Label>
-                    <Select value={role} onValueChange={(v) => setRole(v as UserRole)}>
-                      <SelectTrigger className="h-11 rounded-xl border-slate-200 bg-white text-sm shadow-sm focus:border-slate-400 focus:ring-slate-400">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent sideOffset={8} className="rounded-xl border-slate-200 bg-white">
-                        <SelectItem value="student">Student</SelectItem>
-                        <SelectItem value="hostel_attendant">Hostel Attendant</SelectItem>
-                        <SelectItem value="superintendent">Superintendent</SelectItem>
-                        <SelectItem value="security_guard">Security Guard</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-1.5">
                     <Label htmlFor="fullName" className="text-xs font-medium uppercase tracking-wide text-slate-500">
                       Full Name
                     </Label>
@@ -186,62 +169,43 @@ export default function Auth() {
                     />
                   </div>
 
-                  {role === 'student' && (
-                    <>
-                      <div className="space-y-1.5">
-                        <Label htmlFor="rollNo" className="text-xs font-medium uppercase tracking-wide text-slate-500">
-                          Roll Number
-                        </Label>
-                        <Input
-                          id="rollNo"
-                          value={rollNo}
-                          onChange={(e) => setRollNo(e.target.value)}
-                          required
-                          className="h-11 rounded-xl border-slate-200 bg-white text-sm shadow-sm focus:border-slate-400 focus:ring-slate-400"
-                        />
-                      </div>
-                      <div className="space-y-1.5">
-                        <Label htmlFor="hostel" className="text-xs font-medium uppercase tracking-wide text-slate-500">
-                          Hostel
-                        </Label>
-                        <Input
-                          id="hostel"
-                          value={hostel}
-                          onChange={(e) => setHostel(e.target.value)}
-                          required
-                          className="h-11 rounded-xl border-slate-200 bg-white text-sm shadow-sm focus:border-slate-400 focus:ring-slate-400"
-                        />
-                      </div>
-                      <div className="space-y-1.5">
-                        <Label htmlFor="parentContact" className="text-xs font-medium uppercase tracking-wide text-slate-500">
-                          Parent's Contact
-                        </Label>
-                        <Input
-                          id="parentContact"
-                          type="tel"
-                          value={parentContact}
-                          onChange={(e) => setParentContact(e.target.value)}
-                          required
-                          className="h-11 rounded-xl border-slate-200 bg-white text-sm shadow-sm focus:border-slate-400 focus:ring-slate-400"
-                        />
-                      </div>
-                    </>
-                  )}
-
-                  {role === 'hostel_attendant' && (
-                    <div className="space-y-1.5">
-                      <Label htmlFor="hostel" className="text-xs font-medium uppercase tracking-wide text-slate-500">
-                        Assigned Hostel
-                      </Label>
-                      <Input
-                        id="hostel"
-                        value={hostel}
-                        onChange={(e) => setHostel(e.target.value)}
-                        required
-                        className="h-11 rounded-xl border-slate-200 bg-white text-sm shadow-sm focus:border-slate-400 focus:ring-slate-400"
-                      />
-                    </div>
-                  )}
+                  <div className="space-y-1.5">
+                    <Label htmlFor="rollNo" className="text-xs font-medium uppercase tracking-wide text-slate-500">
+                      Roll Number
+                    </Label>
+                    <Input
+                      id="rollNo"
+                      value={rollNo}
+                      onChange={(e) => setRollNo(e.target.value)}
+                      required
+                      className="h-11 rounded-xl border-slate-200 bg-white text-sm shadow-sm focus:border-slate-400 focus:ring-slate-400"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="hostel" className="text-xs font-medium uppercase tracking-wide text-slate-500">
+                      Hostel
+                    </Label>
+                    <Input
+                      id="hostel"
+                      value={hostel}
+                      onChange={(e) => setHostel(e.target.value)}
+                      required
+                      className="h-11 rounded-xl border-slate-200 bg-white text-sm shadow-sm focus:border-slate-400 focus:ring-slate-400"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="parentContact" className="text-xs font-medium uppercase tracking-wide text-slate-500">
+                      Parent's Contact
+                    </Label>
+                    <Input
+                      id="parentContact"
+                      type="tel"
+                      value={parentContact}
+                      onChange={(e) => setParentContact(e.target.value)}
+                      required
+                      className="h-11 rounded-xl border-slate-200 bg-white text-sm shadow-sm focus:border-slate-400 focus:ring-slate-400"
+                    />
+                  </div>
 
                   <div className="space-y-1.5">
                     <Label htmlFor="reg-email" className="text-xs font-medium uppercase tracking-wide text-slate-500">

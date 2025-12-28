@@ -12,6 +12,7 @@ enum Role {
   HOSTEL_ATTENDANT @map("hostel_attendant")
   SUPERINTENDENT   @map("superintendent")
   SECURITY_GUARD   @map("security_guard")
+  ADMIN            @map("admin")
 }
 
 enum PassStatus {

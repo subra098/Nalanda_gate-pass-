@@ -123,7 +123,14 @@ export default function AttendantDashboard() {
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-3xl font-bold">Attendant Dashboard</h2>
-            <p className="text-muted-foreground">Review and approve gatepass requests for {hostel}</p>
+            <div className="mt-1 flex flex-col gap-0.5">
+              <p className="text-lg font-medium text-slate-900">Welcome, {user?.fullName}</p>
+              <p className="text-muted-foreground flex items-center gap-2">
+                <span className="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">
+                  Assigned Hostel: {user?.hostel || 'Not Assigned'}
+                </span>
+              </p>
+            </div>
           </div>
           <Button
             variant="outline"

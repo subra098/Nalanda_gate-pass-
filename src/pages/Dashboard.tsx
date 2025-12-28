@@ -4,6 +4,7 @@ import StudentDashboard from '@/components/dashboards/StudentDashboard';
 import AttendantDashboard from '@/components/dashboards/AttendantDashboard';
 import SuperintendentDashboard from '@/components/dashboards/SuperintendentDashboard';
 import SecurityDashboard from '@/components/dashboards/SecurityDashboard';
+import AdminDashboard from '@/components/dashboards/AdminDashboard';
 
 export default function Dashboard() {
   const { user, role, loading } = useAuth();
@@ -40,6 +41,7 @@ export default function Dashboard() {
       {role === 'hostel_attendant' && <AttendantDashboard />}
       {role === 'superintendent' && <SuperintendentDashboard />}
       {role === 'security_guard' && <SecurityDashboard />}
+      {role === 'admin' && <AdminDashboard />}
     </>
   );
 }

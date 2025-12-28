@@ -5,7 +5,7 @@ import { hashPassword, comparePassword } from "../utils/password.js";
 export const register = async (req, res) => {
     try {
         console.log("Register attempt body:", req.body);
-        let { email, password, fullName, role, hostel, rollNo, parentContact } = req.body;
+        let { email, password, fullName, hostel, rollNo, parentContact } = req.body;
 
         // Trim all inputs to handle mobile quirks
         email = email?.trim().toLowerCase();
@@ -22,8 +22,8 @@ export const register = async (req, res) => {
 
         const hashedPassword = await hashPassword(password);
 
-        // Convert role to uppercase to match Prisma enum
-        const roleUpperCase = role.toUpperCase();
+        // ALWAYS force role to STUDENT for public registration
+        const roleUpperCase = "STUDENT";
 
         const user = await prisma.user.create({
             data: {
