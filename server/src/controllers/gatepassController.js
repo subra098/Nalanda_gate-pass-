@@ -8,12 +8,20 @@ export const createGatepass = async (req, res) => {
         const studentId = req.user.id;
         const type = destinationType.toUpperCase();
 
+        // Fetch student details to get name
+        const student = await prisma.user.findUnique({
+            where: { id: studentId },
+            select: { fullName: true }
+        });
+        const studentName = student?.fullName || "Unknown";
+
         let gatepass;
 
         if (type === "CHANDAKA") {
             gatepass = await prisma.chandakaPass.create({
                 data: {
                     studentId,
+                    studentName,
                     destinationDetails,
                     reason,
                     expectedReturnAt: new Date(expectedReturnAt),
@@ -23,6 +31,7 @@ export const createGatepass = async (req, res) => {
             gatepass = await prisma.bhubaneswarPass.create({
                 data: {
                     studentId,
+                    studentName,
                     destinationDetails,
                     reason,
                     expectedReturnAt: new Date(expectedReturnAt),
@@ -40,6 +49,7 @@ export const createGatepass = async (req, res) => {
             gatepass = await prisma.homePass.create({
                 data: {
                     studentId,
+                    studentName,
                     roomNo: homeFields.roomNo || "N/A",
                     branch: homeFields.branch || "N/A",
                     semester: homeFields.semester || "N/A",

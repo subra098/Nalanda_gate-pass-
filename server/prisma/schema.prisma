@@ -55,6 +55,7 @@ model ChandakaPass {
   id                 String          @id @default(uuid())
   studentId          String          @map("student_id")
   student            User            @relation(fields: [studentId], references: [id])
+  studentName        String?         @map("student_name")
   destinationDetails String          @map("destination_details")
   reason             String
   expectedReturnAt   DateTime        @map("expected_return_at")
@@ -77,6 +78,7 @@ model BhubaneswarPass {
   id                 String          @id @default(uuid())
   studentId          String          @map("student_id")
   student            User            @relation(fields: [studentId], references: [id])
+  studentName        String?         @map("student_name")
   destinationDetails String          @map("destination_details")
   reason             String
   expectedReturnAt   DateTime        @map("expected_return_at")
@@ -99,6 +101,7 @@ model HomePass {
   id                 String          @id @default(uuid())
   studentId          String          @map("student_id")
   student            User            @relation(fields: [studentId], references: [id])
+  studentName        String?         @map("student_name")
   
   // Home-specific fields from Leave Application
   roomNo             String          @map("room_no")
