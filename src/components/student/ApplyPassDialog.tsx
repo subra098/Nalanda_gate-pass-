@@ -113,7 +113,7 @@ export default function ApplyPassDialog({ open, onOpenChange, onSuccess }: Apply
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="rounded-xl">
-                  <SelectItem value="chandaka">Chandaka</SelectItem>
+                  <SelectItem value="chandaka">Chandaka.</SelectItem>
                   <SelectItem value="bhubaneswar">Bhubaneswar</SelectItem>
                   <SelectItem value="home_other">Home (Leave Application)</SelectItem>
                 </SelectContent>
