@@ -5,6 +5,7 @@ import authRoutes from "./routes/authRoutes.js";
 import gatepassRoutes from "./routes/gatepassRoutes.js";
 import securityRoutes from "./routes/securityRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
+import extensionRoutes from "./routes/extensionRoutes.js";
 
 dotenv.config();
 
@@ -18,6 +19,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/gatepass", gatepassRoutes); // Shared for student/attendant/superintendent
 app.use("/api/security", securityRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/extension", extensionRoutes);
 
 app.get("/", (req, res) => {
     res.send("Pass Flow Backend Running 🚀");

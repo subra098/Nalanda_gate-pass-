@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import api from '@/lib/api';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,11 +9,12 @@ import { toast } from 'sonner';
 
 interface ExtensionDialogProps {
   passId: string;
+  passType: 'chandaka' | 'bhubaneswar' | 'home';
   onClose: () => void;
   onSuccess: () => void;
 }
 
-export default function ExtensionDialog({ passId, onClose, onSuccess }: ExtensionDialogProps) {
+export default function ExtensionDialog({ passId, passType, onClose, onSuccess }: ExtensionDialogProps) {
   const [reason, setReason] = useState('');
   const [newReturnAt, setNewReturnAt] = useState('');
   const [loading, setLoading] = useState(false);
@@ -23,22 +24,18 @@ export default function ExtensionDialog({ passId, onClose, onSuccess }: Extensio
     setLoading(true);
 
     try {
-      const { error } = await supabase
-        .from('extension_requests')
-        .insert({
-          gatepass_id: passId,
-          reason,
-          new_expected_return_at: newReturnAt,
-          status: 'pending'
-        });
-
-      if (error) throw error;
+      await api.post('/extension/request', {
+        passId,
+        passType,
+        reason,
+        newExpectedReturnAt: newReturnAt,
+      });
 
       toast.success('Extension request submitted');
       onSuccess();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error:', error);
-      toast.error('Failed to submit extension request');
+      toast.error(error.response?.data?.message || 'Failed to submit extension request');
     } finally {
       setLoading(false);
     }

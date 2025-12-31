@@ -70,6 +70,7 @@ model ChandakaPass {
   updatedAt          DateTime        @updatedAt @map("updated_at")
 
   scanLogs           ScanLog[]
+  extensionRequests  ExtensionRequest[]
 
   @@map("chandaka_passes")
 }
@@ -93,6 +94,7 @@ model BhubaneswarPass {
   updatedAt          DateTime        @updatedAt @map("updated_at")
 
   scanLogs           ScanLog[]
+  extensionRequests  ExtensionRequest[]
 
   @@map("bhubaneswar_passes")
 }
@@ -128,6 +130,7 @@ model HomePass {
   updatedAt          DateTime        @updatedAt @map("updated_at")
 
   scanLogs           ScanLog[]
+  extensionRequests  ExtensionRequest[]
 
   @@map("home_passes")
 }
@@ -151,4 +154,34 @@ model ScanLog {
   timestamp       DateTime @default(now())
 
   @@map("gate_logs")
+}
+
+enum ExtensionStatus {
+  PENDING  @map("pending")
+  APPROVED @map("approved")
+  REJECTED @map("rejected")
+}
+
+model ExtensionRequest {
+  id                    String          @id @default(uuid())
+  
+  chandakaPassId        String?         @map("chandaka_pass_id")
+  chandakaPass          ChandakaPass?   @relation(fields: [chandakaPassId], references: [id])
+  
+  bhubaneswarPassId     String?         @map("bhubaneswar_pass_id")
+  bhubaneswarPass       BhubaneswarPass? @relation(fields: [bhubaneswarPassId], references: [id])
+  
+  homePassId            String?         @map("home_pass_id")
+  homePass              HomePass?       @relation(fields: [homePassId], references: [id])
+  
+  reason                String
+  newExpectedReturnAt   DateTime        @map("new_expected_return_at")
+  status                ExtensionStatus @default(PENDING)
+  reviewedBy            String?         @map("reviewed_by")
+  reviewNotes           String?         @map("review_notes")
+  
+  createdAt             DateTime        @default(now()) @map("created_at")
+  updatedAt             DateTime        @updatedAt @map("updated_at")
+
+  @@map("extension_requests")
 }
