@@ -184,9 +184,39 @@ export const updatePassStatus = async (req, res) => {
         const userId = req.user.id;
         const userRole = req.user.role;
 
-        let newStatus = status === "APPROVED"
-            ? (userRole === "HOSTEL_ATTENDANT" ? "ATTENDANT_APPROVED" : "SUPERINTENDENT_APPROVED")
-            : "REJECTED";
+        // 1. First, find which table this pass belongs to
+        let passType = null;
+        let existingPass = await prisma.chandakaPass.findUnique({ where: { id } });
+        if (existingPass) passType = "CHANDAKA";
+        else {
+            existingPass = await prisma.bhubaneswarPass.findUnique({ where: { id } });
+            if (existingPass) passType = "BHUBANESWAR";
+            else {
+                existingPass = await prisma.homePass.findUnique({ where: { id } });
+                if (existingPass) passType = "HOME_OTHER";
+            }
+        }
+
+        if (!existingPass) {
+            return res.status(404).json({ message: "Gatepass not found" });
+        }
+
+        let newStatus;
+        if (status === "REJECTED") {
+            newStatus = "REJECTED";
+        } else {
+            // Approval flow
+            if (userRole === "HOSTEL_ATTENDANT") {
+                // CHANDAKA passes skip superintendent approval
+                if (passType === "CHANDAKA") {
+                    newStatus = "SUPERINTENDENT_APPROVED";
+                } else {
+                    newStatus = "ATTENDANT_APPROVED";
+                }
+            } else if (userRole === "SUPERINTENDENT") {
+                newStatus = "SUPERINTENDENT_APPROVED";
+            }
+        }
 
         let qrCodeData = (newStatus === "SUPERINTENDENT_APPROVED") ? JSON.stringify({ passId: id }) : null;
 
@@ -199,16 +229,13 @@ export const updatePassStatus = async (req, res) => {
             updateData.superintendentNotes = notes;
         }
 
-        // Try updating in each table until success
         let updatedPass;
-        try {
+        if (passType === "CHANDAKA") {
             updatedPass = await prisma.chandakaPass.update({ where: { id }, data: updateData });
-        } catch (e) {
-            try {
-                updatedPass = await prisma.bhubaneswarPass.update({ where: { id }, data: updateData });
-            } catch (e2) {
-                updatedPass = await prisma.homePass.update({ where: { id }, data: updateData });
-            }
+        } else if (passType === "BHUBANESWAR") {
+            updatedPass = await prisma.bhubaneswarPass.update({ where: { id }, data: updateData });
+        } else {
+            updatedPass = await prisma.homePass.update({ where: { id }, data: updateData });
         }
 
         res.json(updatedPass);
